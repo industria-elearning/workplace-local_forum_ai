@@ -404,15 +404,32 @@ class observer {
     public static function forum_deleted(\core\event\course_module_deleted $event): void {
         global $DB;
 
-        // Check if the deleted module is a forum.
-        if ($event->other['modulename'] !== 'forum') {
+        if (!isset($event->other['modulename']) || $event->other['modulename'] !== 'forum') {
+            return;
+        }
+
+        if (!isset($event->other['instanceid'])) {
+            debugging('forum_deleted: missing instanceid in event->other', DEBUG_DEVELOPER);
             return;
         }
 
         $forumid = $event->other['instanceid'];
 
-        // Delete related records from plugin tables.
         $DB->delete_records('local_forum_ai_config', ['forumid' => $forumid]);
         $DB->delete_records('local_forum_ai_pending', ['forumid' => $forumid]);
+    }
+
+    /**
+     * Triggered when a discussion is deleted.
+     *
+     * @param \core\event\course_module_deleted $event
+     * @return void
+     */
+    public static function discussion_deleted(\mod_forum\event\discussion_deleted $event): void {
+        global $DB;
+
+        $discussionid = $event->objectid;
+
+        $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
     }
 }
