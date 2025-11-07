@@ -422,7 +422,7 @@ class observer {
     /**
      * Triggered when a discussion is deleted.
      *
-     * @param \core\event\course_module_deleted $event
+     * @param \mod_forum\event\discussion_deleted $event The event triggered when a discussion is deleted.
      * @return void
      */
     public static function discussion_deleted(\mod_forum\event\discussion_deleted $event): void {
