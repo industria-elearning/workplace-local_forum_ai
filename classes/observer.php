@@ -25,6 +25,10 @@
 
 namespace local_forum_ai;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../locallib.php');
+
 use aiprovider_datacurso\httpclient\ai_services_api;
 use mod_forum\event\discussion_created;
 
@@ -370,7 +374,7 @@ class observer {
 
         try {
             $course = $DB->get_record('course', ['id' => $discussion->course], '*', MUST_EXIST);
-            $teachers = local_forum_ai_get_editingteachers($course->id);
+            $teachers = \local_forum_ai_get_editingteachers($course->id);
 
             if (empty($teachers)) {
                 return false;
