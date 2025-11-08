@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Backup plugin for local_forum_ai
+ * Backup plugin for local_forum_ai.
  *
  * @package    local_forum_ai
  * @category   backup
@@ -33,21 +33,21 @@ class backup_local_forum_ai_plugin extends backup_local_plugin {
         $pluginwrapper = new backup_nested_element($this->get_recommended_name());
         $plugin->add_child($pluginwrapper);
 
-        // Wrapper for all forum_ai configurations.
-        $configs = new backup_nested_element('configs');
+        // Wrapper for all forum AI configurations.
+        $configs = new backup_nested_element('forum_ai_configs');
         $pluginwrapper->add_child($configs);
 
-        $config = new backup_nested_element('config', ['id'], [
+        $config = new backup_nested_element('forum_ai_config', ['id'], [
             'forumid', 'enabled', 'reply_message', 'require_approval',
             'timecreated', 'timemodified',
         ]);
         $configs->add_child($config);
 
         // Wrapper for pending AI messages.
-        $pendings = new backup_nested_element('pendings');
+        $pendings = new backup_nested_element('forum_ai_pendings');
         $pluginwrapper->add_child($pendings);
 
-        $pending = new backup_nested_element('pending', ['id'], [
+        $pending = new backup_nested_element('forum_ai_pending', ['id'], [
             'discussionid', 'forumid', 'creator_userid', 'subject', 'message',
             'status', 'approval_token', 'timecreated', 'timemodified', 'approved_at',
         ]);

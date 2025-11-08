@@ -37,11 +37,11 @@ class restore_local_forum_ai_plugin extends restore_local_plugin {
         return [
             new restore_path_element(
                 'local_forum_ai_config',
-                $this->get_pathfor('/configs/config')
+                $this->get_pathfor('/forum_ai_configs/forum_ai_config')
             ),
             new restore_path_element(
                 'local_forum_ai_pending',
-                $this->get_pathfor('/pendings/pending')
+                $this->get_pathfor('/forum_ai_pendings/forum_ai_pending')
             ),
         ];
     }
