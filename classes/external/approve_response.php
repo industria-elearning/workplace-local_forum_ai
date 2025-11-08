@@ -14,18 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * External service to approve or reject AI-generated responses in forums.
- *
- * Define the webservice function `local_forum_ai_approve response`
- * which allows you to approve or reject pending responses.
- *
- * @package    local_forum_ai
- * @category   external
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_forum_ai\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -39,12 +27,16 @@ use external_value;
 use external_single_structure;
 use moodle_exception;
 
-
 /**
- * External class to approve or reject AI-generated responses in forums.
+ * External service to approve or reject AI-generated responses in forums.
  *
- * It exposes the `local forum_ai_approve response` service that allows
- * approve or reject pending responses using a token.
+ * Define the webservice function `local_forum_ai_approve response`
+ * which allows you to approve or reject pending responses.
+ *
+ * @package    local_forum_ai
+ * @category   external
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class approve_response extends external_api {
     /**
@@ -90,19 +82,15 @@ class approve_response extends external_api {
         $coursectx  = \context_course::instance($course->id);
 
         self::validate_context($modcontext);
+        require_login($course, false, $cm);
 
-        $allowedroles = ['manager', 'editingteacher'];
-        $userroles = get_user_roles($coursectx, $USER->id, true);
-        $hasrole = false;
-        foreach ($userroles as $ur) {
-            $shortname = $DB->get_field('role', 'shortname', ['id' => $ur->roleid]);
-            if ($shortname && in_array($shortname, $allowedroles, true)) {
-                $hasrole = true;
-                break;
-            }
-        }
-        if (!$hasrole) {
-            throw new moodle_exception('nopermission', 'error');
+        if (!has_capability('local/forum_ai:approveresponses', $modcontext)) {
+            throw new \required_capability_exception(
+                $modcontext,
+                'local/forum_ai:approveresponses',
+                'nopermissions',
+                ''
+            );
         }
 
         if ($params['action'] === 'approve') {

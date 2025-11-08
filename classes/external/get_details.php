@@ -14,18 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * External service to obtain details of a discussion with AI response.
- *
- * Define the webservice function `local_forum_ai_get_details`
- * which returns course, forum, discussion, posts and AI response status.
- *
- * @package    local_forum_ai
- * @category   external
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_forum_ai\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -41,7 +29,15 @@ use context_module;
 use moodle_exception;
 
 /**
- * External API class to get details of AI responses in forum discussions.
+ * External service to obtain details of a discussion with AI response.
+ *
+ * Define the webservice function `local_forum_ai_get_details`
+ * which returns course, forum, discussion, posts and AI response status.
+ *
+ * @package    local_forum_ai
+ * @category   external
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_details extends external_api {
     /**

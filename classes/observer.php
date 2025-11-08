@@ -14,15 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Event observers for forum_ai plugin.
- *
- * @package    local_forum_ai
- * @category   event
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_forum_ai;
 
 defined('MOODLE_INTERNAL') || die();
@@ -33,7 +24,12 @@ use aiprovider_datacurso\httpclient\ai_services_api;
 use mod_forum\event\discussion_created;
 
 /**
- * Event observer class for forum_ai.
+ * Event observers for forum_ai plugin.
+ *
+ * @package    local_forum_ai
+ * @category   event
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class observer {
     /**

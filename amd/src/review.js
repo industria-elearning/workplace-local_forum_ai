@@ -1,9 +1,34 @@
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
+/**
+ * Local forum ai review.
+ *
+ * @module      local_forum_ai/review
+ * @copyright   2025 Datacurso
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import { get_string as getString } from 'core/str';
 
 /**
- * JS controller for the AI response review page.
+ * Initialize the AI response review interface.
+ *
+ * @returns {Promise<void>} Resolves when all event handlers are registered.
  */
 export const init = async () => {
     const editBtn = document.getElementById("edit-btn");
@@ -14,7 +39,7 @@ export const init = async () => {
     const saveBtn = editForm ? editForm.querySelector("button[type='submit']") : null;
     const token = editForm ? editForm.dataset.token : null;
 
-    // Preload strings used throughout the UI
+    // Preload localized strings.
     const [
         strUpdatedSuccess,
         strUpdatedError,
@@ -29,7 +54,7 @@ export const init = async () => {
         getString('action_failed', 'local_forum_ai'),
     ]);
 
-    // --- Toggle editing ---
+    // Toggle edit mode.
     if (editBtn) {
         editBtn.addEventListener("click", () => {
             viewDiv.style.display = "none";
@@ -44,7 +69,7 @@ export const init = async () => {
         });
     }
 
-    // --- Save changes via AJAX ---
+    // Save changes via AJAX.
     if (saveBtn) {
         saveBtn.addEventListener("click", e => {
             e.preventDefault();
@@ -55,7 +80,6 @@ export const init = async () => {
                 args: { token: token, message: newMessage },
             }])[0].done(response => {
                 if (response.status === "ok") {
-                    // Replace content in normal view
                     viewDiv.querySelector(".card-text").innerHTML = response.message;
 
                     Notification.addNotification({
@@ -63,7 +87,6 @@ export const init = async () => {
                         type: "success"
                     });
 
-                    // Return to normal view
                     editForm.style.display = "none";
                     viewDiv.style.display = "block";
                 } else {
@@ -76,7 +99,7 @@ export const init = async () => {
         });
     }
 
-    // --- Approve / Reject ---
+    // Approve or reject responses.
     document.querySelectorAll(".action-btn").forEach(btn => {
         btn.addEventListener("click", e => {
             e.preventDefault();

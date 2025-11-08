@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_forum_ai\external;
+
+use external_api;
+use external_function_parameters;
+use external_value;
+use external_single_structure;
+use external_multiple_structure;
+
 /**
  * External service to approve or reject AI-generated responses in forums.
  *
@@ -24,21 +32,6 @@
  * @category   external
  * @copyright  2025 Datacurso
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-namespace local_forum_ai\external;
-
-use external_api;
-use external_function_parameters;
-use external_value;
-use external_single_structure;
-use external_multiple_structure;
-
-/**
- * External service for retrieving discussion and AI response data.
- *
- * @package   local_forum_ai
- * @copyright 2025
  */
 class get_discussion_data extends external_api {
     /**

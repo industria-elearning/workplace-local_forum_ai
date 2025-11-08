@@ -14,18 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * External service to update a pending AI response in a forum.
- *
- * Defines the webservice function `local_forum_ai_update_response`
- * that allows modifying the message of an AI response before its approval.
- *
- * @package    local_forum_ai
- * @category   external
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_forum_ai\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -38,7 +26,15 @@ use external_value;
 use context_system;
 
 /**
- * External API class to update pending AI responses in forum discussions.
+ * External service to update a pending AI response in a forum.
+ *
+ * Defines the webservice function `local_forum_ai_update_response`
+ * that allows modifying the message of an AI response before its approval.
+ *
+ * @package    local_forum_ai
+ * @category   external
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class update_response extends external_api {
     /**
