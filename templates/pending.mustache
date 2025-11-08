@@ -49,13 +49,16 @@
 }}
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="m-0">{{heading}}</h2>
+    <div class="d-flex align-items-center">
+        {{#headerlogo}}
+        <a class="local_assign_ai-logo-wrapper me-3" href="https://datacurso.com/" target="_blank" rel="noopener noreferrer">
+            <img src="{{logourl}}" alt="Datacurso Logo" class="local_forum_ai-pluginlogo">
+        </a>
+        {{/headerlogo}}
+        <h2 class="m-0">{{heading}}</h2>
+    </div>
 
-    {{#headerlogo}}
-    <a class="local_assign_ai-logo-wrapper" href="https://datacurso.com/" target="_blank" rel="noopener noreferrer">
-        <img src="{{logourl}}" alt="Datacurso Logo" class="local_forum_ai-pluginlogo">
-    </a>
-    {{/headerlogo}}
+    <a href="{{backurl}}" class="btn btn-primary">{{backtocourse}}</a>
 </div>
 
 {{#haspendings}}

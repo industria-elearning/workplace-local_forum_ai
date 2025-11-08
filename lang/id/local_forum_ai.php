@@ -55,6 +55,7 @@ $string['err_table_missing'] = 'Tabel konfigurasi untuk Forum AI tidak ada. Sila
 $string['error_airequest'] = 'Kesalahan komunikasi dengan layanan AI: {$a}';
 $string['error_saving'] = 'Kesalahan menyimpan konfigurasi: {$a}';
 $string['forum'] = 'Forum';
+$string['forum_ai:approveresponses'] = 'Setujui atau tolak respons forum yang dihasilkan oleh AI';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Buka Notifikasi';
 $string['historyresponses'] = 'Riwayat Respon Forum AI';

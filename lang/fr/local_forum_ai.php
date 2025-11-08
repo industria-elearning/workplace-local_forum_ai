@@ -55,6 +55,7 @@ $string['err_table_missing'] = 'La table de configuration du Forum IA n’existe
 $string['error_airequest'] = 'Erreur de communication avec le service IA : {$a}';
 $string['error_saving'] = 'Erreur lors de l’enregistrement de la configuration : {$a}';
 $string['forum'] = 'Forum';
+$string['forum_ai:approveresponses'] = 'Approuver ou rejeter les réponses générées par l’IA dans le forum';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Aller aux notifications';
 $string['historyresponses'] = 'Historique des réponses Forum IA';

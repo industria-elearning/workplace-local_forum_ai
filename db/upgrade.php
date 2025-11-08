@@ -89,5 +89,19 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025091611, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2025110800) {
+        // Define field parentpostid to be added to local_forum_ai_pending.
+        $table = new xmldb_table('local_forum_ai_pending');
+        $field = new xmldb_field('parentpostid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'forumid');
+
+        // Conditionally launch add field parentpostid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025110800, 'local', 'forum_ai');
+    }
+
     return true;
 }

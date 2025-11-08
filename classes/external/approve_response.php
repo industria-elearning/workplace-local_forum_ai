@@ -46,8 +46,8 @@ class approve_response extends external_api {
      */
     public static function execute_parameters() {
         return new external_function_parameters([
-            'token'  => new external_value(PARAM_ALPHANUMEXT, 'Token de aprobación'),
-            'action' => new external_value(PARAM_ALPHA, 'Acción: approve|reject'),
+            'token'  => new external_value(PARAM_ALPHANUMEXT, 'Approval token'),
+            'action' => new external_value(PARAM_ALPHA, 'Action: approve|reject'),
         ]);
     }
 
@@ -78,20 +78,11 @@ class approve_response extends external_api {
         $forum      = $DB->get_record('forum', ['id' => $pending->forumid], '*', MUST_EXIST);
         $course     = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
         $cm         = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
-        $modcontext = \context_module::instance($cm->id);
-        $coursectx  = \context_course::instance($course->id);
 
-        self::validate_context($modcontext);
-        require_login($course, false, $cm);
+        $context = \context_module::instance($cm->id);
+        self::validate_context($context);
 
-        if (!has_capability('local/forum_ai:approveresponses', $modcontext)) {
-            throw new \required_capability_exception(
-                $modcontext,
-                'local/forum_ai:approveresponses',
-                'nopermissions',
-                ''
-            );
-        }
+        require_capability('mod/forum:viewdiscussion', $context);
 
         if ($params['action'] === 'approve') {
             require_once($CFG->dirroot . '/mod/forum/lib.php');
@@ -105,9 +96,30 @@ class approve_response extends external_api {
             $realuser = $USER;
             $USER = \core_user::get_user($teacher->id);
 
+            // Determine the correct parent based on parentpostid.
+            $parentid = $discussion->firstpost;
+
+            if (!empty($pending->parentpostid)) {
+                // Verify that parentpostid exists and belongs to this discussion.
+                $parentpost = $DB->get_record('forum_posts', [
+                    'id' => $pending->parentpostid,
+                    'discussion' => $discussion->id,
+                ]);
+
+                if ($parentpost) {
+                    $parentid = $pending->parentpostid;
+                } else {
+                    // If the parent post does not exist, log the error and use firstpost instead.
+                    debugging(
+                        'Parent post ID ' . $pending->parentpostid . ' not found, using firstpost instead',
+                        DEBUG_DEVELOPER
+                    );
+                }
+            }
+
             $post = new \stdClass();
             $post->discussion    = $discussion->id;
-            $post->parent        = $discussion->firstpost;
+            $post->parent        = $parentid;
             $post->userid        = $teacher->id;
             $post->created       = time();
             $post->modified      = time();
@@ -142,7 +154,7 @@ class approve_response extends external_api {
      */
     public static function execute_returns() {
         return new external_single_structure([
-            'success' => new external_value(PARAM_BOOL, 'Si la acción fue exitosa'),
+            'success' => new external_value(PARAM_BOOL, 'If the action was successful'),
         ]);
     }
 }

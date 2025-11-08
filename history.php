@@ -72,6 +72,9 @@ $templatecontext = [
     'headerlogo' => $logocontext,
 ];
 
+$templatecontext['backtocourse'] = get_string('backtocourse', 'local_forum_ai');
+$templatecontext['backurl'] = (new moodle_url('/course/view.php', ['id' => $courseid]))->out();
+
 foreach ($records as $r) {
     $user = (object)['id' => $r->creator_userid, 'firstname' => $r->firstname, 'lastname' => $r->lastname];
 
