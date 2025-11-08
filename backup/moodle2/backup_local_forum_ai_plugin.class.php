@@ -23,7 +23,6 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_local_forum_ai_plugin extends backup_local_plugin {
-
     /**
      * Define the structure to include in the course backup.
      *

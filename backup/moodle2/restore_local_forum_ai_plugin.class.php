@@ -22,7 +22,6 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_local_forum_ai_plugin extends restore_local_plugin {
-
     /** @var array Temporary configuration data. */
     protected $tempconfigs = [];
 
