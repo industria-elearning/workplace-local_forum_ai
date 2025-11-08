@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,96 +12,115 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Restore handler for the local_forum_ai plugin.
- *
- * This class defines how the plugin data related to AI forum responses
- * is restored during course or activity restore operations.
- *
- * It handles the restoration of configuration records from the
- * `local_forum_ai_config` table and the pending AI-generated responses
- * stored in `local_forum_ai_pending`.
+ * Restore plugin for local_forum_ai.
  *
  * @package    local_forum_ai
- * @category   backup
  * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_local_forum_ai_plugin extends restore_local_plugin {
+
+    /** @var array Temporary configuration data. */
+    protected $tempconfigs = [];
+
+    /** @var array Temporary pending data. */
+    protected $temppendings = [];
+
     /**
-     * Defines the structure of the data that will be restored for each forum instance.
+     * Define restore paths.
      *
-     * This method specifies the XML paths that correspond to the plugin's backup
-     * data sections, allowing Moodle to know which elements to restore and
-     * how to process them.
-     *
-     * @return array of restore_path_element The list of data paths to be processed
+     * @return restore_path_element[]
      */
-    protected function define_forum_subplugin_structure() {
-        $paths = [];
-
-        // Add the paths for the plugin data in the backup XML structure.
-        $paths[] = new restore_path_element('forum_ai_config', $this->get_pathfor('/forum_ai_config'));
-        $paths[] = new restore_path_element('forum_ai_pending', $this->get_pathfor('/forum_ai_pending'));
-
-        return $paths;
+    protected function define_course_plugin_structure() {
+        return [
+            new restore_path_element(
+                'local_forum_ai_config',
+                $this->get_pathfor('/configs/config')
+            ),
+            new restore_path_element(
+                'local_forum_ai_pending',
+                $this->get_pathfor('/pendings/pending')
+            ),
+        ];
     }
 
     /**
-     * Process and restore configuration data for the AI forum plugin.
+     * Store each configuration record temporarily.
      *
-     * This method is triggered automatically when the restore process
-     * encounters a `<forum_ai_config>` element in the backup file.
-     * It re-inserts the configuration into the `local_forum_ai_config` table,
-     * mapping the old forum ID to the new restored one.
-     *
-     * @param array $data The raw configuration data from the backup XML
-     * @return void
+     * @param array $data Configuration data.
      */
-    public function process_forum_ai_config($data) {
-        global $DB;
-
-        $data = (object)$data;
-        $oldid = $data->id;
-
-        // Map old forum ID to the new restored instance.
-        $data->forumid = $this->get_new_parentid('forum');
-
-        // Insert the restored configuration record.
-        $DB->insert_record('local_forum_ai_config', $data);
-
-        // Keep a mapping between old and new IDs for consistency.
-        $this->set_mapping('forum_ai_config', $oldid, $data->id);
+    public function process_local_forum_ai_config($data) {
+        $this->tempconfigs[] = (object)$data;
     }
 
     /**
-     * Process and restore pending AI-generated responses for the forum.
+     * Store each pending record temporarily.
      *
-     * This method handles `<forum_ai_pending>` elements found in the backup.
-     * It re-inserts pending responses into the `local_forum_ai_pending` table,
-     * assigning a new approval token to prevent conflicts or duplication.
-     *
-     * @param array $data The raw pending response data from the backup XML
-     * @return void
+     * @param array $data Pending data.
      */
-    public function process_forum_ai_pending($data) {
+    public function process_local_forum_ai_pending($data) {
+        $this->temppendings[] = (object)$data;
+    }
+
+    /**
+     * After the course has been fully restored (forums included),
+     * insert the actual data using the new IDs.
+     */
+    public function after_restore_course() {
         global $DB;
 
-        $data = (object)$data;
-        $oldid = $data->id;
+        mtrace(">> [local_forum_ai] Restoring configuration and pending data...");
 
-        // Map old forum ID to the new restored instance.
-        $data->forumid = $this->get_new_parentid('forum');
+        // Restore configurations.
+        foreach ($this->tempconfigs as $config) {
+            $newforumid = $this->get_mappingid('forum', $config->forumid);
+            if (!$newforumid) {
+                mtrace("   - Skipped config (original forum {$config->forumid} not mapped)");
+                continue;
+            }
 
-        // Generate a new approval token to avoid duplication across backups.
-        $data->approval_token = \core_text::randomid(16);
+            $record = new stdClass();
+            $record->forumid = $newforumid;
+            $record->enabled = $config->enabled;
+            $record->reply_message = $config->reply_message;
+            $record->require_approval = $config->require_approval;
+            $record->timecreated = $config->timecreated;
+            $record->timemodified = $config->timemodified;
 
-        // Insert the restored pending response.
-        $DB->insert_record('local_forum_ai_pending', $data);
+            $DB->insert_record('local_forum_ai_config', $record);
+            mtrace("   + Config restored for forum={$newforumid}");
+        }
 
-        // Keep a mapping between old and new record IDs.
-        $this->set_mapping('forum_ai_pending', $oldid, $data->id);
+        // Restore pendings.
+        foreach ($this->temppendings as $pending) {
+            $newforumid = $this->get_mappingid('forum', $pending->forumid);
+            $newdiscussionid = $this->get_mappingid('forum_discussion', $pending->discussionid);
+            $newuserid = $this->get_mappingid('user', $pending->creator_userid);
+
+            if (!$newforumid || !$newdiscussionid) {
+                mtrace("   - Skipped pending (missing forum/discussion mapping)");
+                continue;
+            }
+
+            $record = new stdClass();
+            $record->forumid = $newforumid;
+            $record->discussionid = $newdiscussionid;
+            $record->creator_userid = $newuserid ?? $pending->creator_userid;
+            $record->subject = $pending->subject;
+            $record->message = $pending->message;
+            $record->status = 'pending';
+            $record->approval_token = md5(uniqid('restored_', true));
+            $record->timecreated = $pending->timecreated;
+            $record->timemodified = time();
+            $record->approved_at = null;
+
+            $DB->insert_record('local_forum_ai_pending', $record);
+            mtrace("   + Pending restored for forum={$newforumid}, discussion={$newdiscussionid}");
+        }
+
+        mtrace(">> [local_forum_ai] Restoration finished ✅");
     }
 }
