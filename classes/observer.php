@@ -190,8 +190,8 @@ class observer {
      * @param object $discussion The discussion object.
      * @param object $forum The forum object.
      * @param string $message The AI-generated message.
-     * @param string $status The approval status ('pending' or 'approved').
-     * @param int $parentpostid The ID of the parent post to reply to.
+     * @param string $status The approval status ('pending' or 'approved'). Defaults to 'pending'.
+     * @param int|null $parentpostid The ID of the parent post to reply to, or null if top-level.
      * @return void
      */
     private static function create_approval_request(
