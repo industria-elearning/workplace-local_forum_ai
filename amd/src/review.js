@@ -1,20 +1,60 @@
-import Ajax from 'core/ajax';
-import Notification from 'core/notification';
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Controlador JS para la página de revisión de respuesta AI.
+ * Local forum ai review.
+ *
+ * @module      local_forum_ai/review
+ * @copyright   2025 Datacurso
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-export const init = () => {
+
+import Ajax from 'core/ajax';
+import Notification from 'core/notification';
+import { get_string as getString } from 'core/str';
+
+/**
+ * Initialize the AI response review interface.
+ *
+ * @returns {Promise<void>} Resolves when all event handlers are registered.
+ */
+export const init = async () => {
     const editBtn = document.getElementById("edit-btn");
     const viewDiv = document.getElementById("airesponse-view");
     const editForm = document.getElementById("airesponse-edit");
     const cancelBtn = document.getElementById("cancel-edit");
     const textarea = editForm ? editForm.querySelector("textarea[name='message']") : null;
     const saveBtn = editForm ? editForm.querySelector("button[type='submit']") : null;
-
     const token = editForm ? editForm.dataset.token : null;
 
-    // --- Alternar edición ---
+    // Preload localized strings.
+    const [
+        strUpdatedSuccess,
+        strUpdatedError,
+        strApproved,
+        strRejected,
+        strActionFailed
+    ] = await Promise.all([
+        getString('response_updated', 'local_forum_ai'),
+        getString('response_update_failed', 'local_forum_ai'),
+        getString('response_approved', 'local_forum_ai'),
+        getString('response_rejected', 'local_forum_ai'),
+        getString('action_failed', 'local_forum_ai'),
+    ]);
+
+    // Toggle edit mode.
     if (editBtn) {
         editBtn.addEventListener("click", () => {
             viewDiv.style.display = "none";
@@ -29,7 +69,7 @@ export const init = () => {
         });
     }
 
-    // --- Guardar cambios por AJAX ---
+    // Save changes via AJAX.
     if (saveBtn) {
         saveBtn.addEventListener("click", e => {
             e.preventDefault();
@@ -40,20 +80,18 @@ export const init = () => {
                 args: { token: token, message: newMessage },
             }])[0].done(response => {
                 if (response.status === "ok") {
-                    // Reemplazar contenido en vista normal
                     viewDiv.querySelector(".card-text").innerHTML = response.message;
 
                     Notification.addNotification({
-                        message: "Respuesta actualizada correctamente.",
+                        message: strUpdatedSuccess,
                         type: "success"
                     });
 
-                    // Volver a vista normal
                     editForm.style.display = "none";
                     viewDiv.style.display = "block";
                 } else {
                     Notification.addNotification({
-                        message: "No se pudo actualizar la respuesta.",
+                        message: strUpdatedError,
                         type: "error"
                     });
                 }
@@ -61,7 +99,7 @@ export const init = () => {
         });
     }
 
-    // --- Aprobar / Rechazar ---
+    // Approve or reject responses.
     document.querySelectorAll(".action-btn").forEach(btn => {
         btn.addEventListener("click", e => {
             e.preventDefault();
@@ -75,18 +113,17 @@ export const init = () => {
             }])[0].done(response => {
                 if (response.success) {
                     Notification.addNotification({
-                        message: action === "approve"
-                            ? "Respuesta AI aprobada y publicada con éxito."
-                            : "Respuesta AI rechazada.",
+                        message: action === "approve" ? strApproved : strRejected,
                         type: "success"
                     });
 
                     setTimeout(() => {
-                        window.location.href = M.cfg.wwwroot + "/mod/forum/discuss.php?d=" + btn.dataset.discussionid;
+                        window.location.href =
+                            `${M.cfg.wwwroot}/mod/forum/discuss.php?d=${btn.dataset.discussionid}`;
                     }, 1500);
                 } else {
                     Notification.addNotification({
-                        message: "No se pudo procesar la acción.",
+                        message: strActionFailed,
                         type: "error"
                     });
                 }

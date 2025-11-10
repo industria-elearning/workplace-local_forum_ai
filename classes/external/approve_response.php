@@ -14,18 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Servicio externo para aprobar o rechazar respuestas generadas por AI en foros.
- *
- * Define la función webservice `local_forum_ai_approve_response`
- * que permite aprobar o rechazar respuestas pendientes de aprobación.
- *
- * @package    local_forum_ai
- * @category   external
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace local_forum_ai\external;
 
 defined('MOODLE_INTERNAL') || die();
@@ -39,18 +27,22 @@ use external_value;
 use external_single_structure;
 use moodle_exception;
 
-
 /**
- * Clase externa para aprobar o rechazar respuestas generadas por AI en foros.
+ * External service to approve or reject AI-generated responses in forums.
  *
- * Expone el servicio `local_forum_ai_approve_response` que permite
- * aprobar o rechazar respuestas pendientes de aprobación mediante token.
+ * Define the webservice function `local_forum_ai_approve response`
+ * which allows you to approve or reject pending responses.
+ *
+ * @package    local_forum_ai
+ * @category   external
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class approve_response extends external_api {
     /**
-     * Define los parámetros de entrada de la función externa.
+     * Define the input parameters of the external function.
      *
-     * @return external_function_parameters estructura de parámetros
+     * @return external_function_parameters parameter structure
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -60,12 +52,12 @@ class approve_response extends external_api {
     }
 
     /**
-     * Ejecuta la acción de aprobar o rechazar una respuesta.
+     * Perform the action of approving or rejecting a response.
      *
-     * @param string $token  Token de aprobación asociado a la respuesta pendiente
-     * @param string $action Acción a ejecutar: approve o reject
-     * @return array resultado con clave 'success' en caso de éxito
-     * @throws moodle_exception si no se cumplen las validaciones o permisos
+     * @param string $token  Approval token associated with the pending response
+     * @param string $action Action to perform: approve or reject
+     * @return array result with 'success' key in case of success
+     * @throws moodle_exception if the validations or permissions are not met
      */
     public static function execute($token, $action) {
         global $DB, $CFG, $USER;
@@ -90,25 +82,21 @@ class approve_response extends external_api {
         $coursectx  = \context_course::instance($course->id);
 
         self::validate_context($modcontext);
+        require_login($course, false, $cm);
 
-        $allowedroles = ['manager', 'editingteacher'];
-        $userroles = get_user_roles($coursectx, $USER->id, true);
-        $hasrole = false;
-        foreach ($userroles as $ur) {
-            $shortname = $DB->get_field('role', 'shortname', ['id' => $ur->roleid]);
-            if ($shortname && in_array($shortname, $allowedroles, true)) {
-                $hasrole = true;
-                break;
-            }
-        }
-        if (!$hasrole) {
-            throw new moodle_exception('nopermission', 'error');
+        if (!has_capability('local/forum_ai:approveresponses', $modcontext)) {
+            throw new \required_capability_exception(
+                $modcontext,
+                'local/forum_ai:approveresponses',
+                'nopermissions',
+                ''
+            );
         }
 
         if ($params['action'] === 'approve') {
             require_once($CFG->dirroot . '/mod/forum/lib.php');
 
-            $teacher = get_editingteachers($course->id, true);
+            $teacher = \local_forum_ai_get_editingteachers($course->id, true);
 
             if (!$teacher) {
                 throw new moodle_exception('noteachersfound', 'local_forum_ai');
@@ -148,9 +136,9 @@ class approve_response extends external_api {
     }
 
     /**
-     * Define la estructura de salida de la función externa.
+     * Define the output structure of the external function.
      *
-     * @return external_single_structure estructura de retorno
+     * @return external_single_structure return structure
      */
     public static function execute_returns() {
         return new external_single_structure([
