@@ -29,7 +29,8 @@
         { "html": "<div>Post content rendered separately</div>" }
       ],
       "statusclass": "bg-success text-white",
-      "statuslabel": "<i class='fa fa-check mr-2'></i> AI response approved",
+      "statusicon": "fa fa-check",
+      "statuslabel": "AI response approved",
       "airesponse": "<p>This is the AI-generated response</p>"
     }
 }}
@@ -48,6 +49,6 @@
 {{/noposts}}
 
 <div class="alert mt-4 {{statusclass}}">
-    <h5>{{{statuslabel}}}</h5>
+    <h5><i class="{{statusicon}} mr-2" aria-hidden="true"></i> {{statuslabel}}</h5>
     {{{airesponse}}}
 </div>

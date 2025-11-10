@@ -93,14 +93,17 @@ async function renderDiscussion(data, strings) {
     }
 
     let statusClass = 'bg-secondary';
-    let statusLabel = `<i class="fa fa-robot mr-2"></i> ${strings.aiResponse}`;
+    let statusIcon = 'fa fa-robot';
+    let statusLabel = strings.aiResponse;
 
     if (data.status === 'approved') {
         statusClass = 'bg-success text-white';
-        statusLabel = `<i class="fa fa-check mr-2"></i> ${strings.aiResponseApproved}`;
+        statusIcon = 'fa fa-check';
+        statusLabel = strings.aiResponseApproved;
     } else if (data.status === 'rejected') {
         statusClass = 'bg-danger text-white';
-        statusLabel = `<i class="fa fa-times mr-2"></i> ${strings.aiResponseRejected}`;
+        statusIcon = 'fa fa-times';
+        statusLabel = strings.aiResponseRejected;
     }
 
     return Templates.render('local_forum_ai/history_modal', {
@@ -111,6 +114,7 @@ async function renderDiscussion(data, strings) {
         nopoststext: strings.noPosts,
         posts: posts,
         statusclass: statusClass,
+        statusicon: statusIcon,
         statuslabel: statusLabel,
         airesponse: data.airesponse,
     });
