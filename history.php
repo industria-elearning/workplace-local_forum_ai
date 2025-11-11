@@ -29,7 +29,6 @@ require_once(__DIR__ . '/locallib.php');
 $forumid = required_param('forumid', PARAM_INT);
 $courseid = optional_param('courseid', 0, PARAM_INT);
 
-// Resolve forum, course and CM to integrate with forum navigation like a normal page.
 $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
