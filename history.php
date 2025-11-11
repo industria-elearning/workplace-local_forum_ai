@@ -26,26 +26,31 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
-require_login();
+$forumid = required_param('forumid', PARAM_INT);
+$courseid = optional_param('courseid', 0, PARAM_INT);
 
-$courseid = required_param('courseid', PARAM_INT);
-$forumid  = optional_param('forumid', 0, PARAM_INT);
+// Resolve forum, course and CM to integrate with forum navigation like a normal page.
+$forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+$cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-$context = context_course::instance($courseid);
-
+require_login($course, true, $cm);
+$context = context_module::instance($cm->id);
 require_capability('local/forum_ai:approveresponses', $context);
 
-$PAGE->set_url(new moodle_url('/local/forum_ai/history.php', $params));
+$PAGE->set_url('/local/forum_ai/history.php', ['forumid' => $forumid]);
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('base');
 $PAGE->set_title(get_string('historyresponses', 'local_forum_ai'));
-$PAGE->set_heading(get_string('historyresponses', 'local_forum_ai'));
+$PAGE->set_heading($course->fullname);
 $PAGE->requires->css('/local/forum_ai/styles/review.css');
 
-$PAGE->navbar->ignore_active();
+// Breadcrumbs: forum name -> this page.
+$PAGE->navbar->add($forum->name, new moodle_url('/mod/forum/view.php', ['id' => $cm->id]));
+$PAGE->navbar->add(get_string('historyresponses', 'local_forum_ai'));
 
 local_forum_ai_cleanup_pending();
 
+$courseid = $course->id;
 $records = local_forum_ai_get_history($courseid, $forumid);
 
 $statusmap = [
@@ -72,8 +77,7 @@ $templatecontext = [
     'headerlogo' => $logocontext,
 ];
 
-$templatecontext['backtocourse'] = get_string('backtocourse', 'local_forum_ai');
-$templatecontext['backurl'] = (new moodle_url('/course/view.php', ['id' => $courseid]))->out();
+
 
 foreach ($records as $r) {
     $user = (object)['id' => $r->creator_userid, 'firstname' => $r->firstname, 'lastname' => $r->lastname];
