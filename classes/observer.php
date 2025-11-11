@@ -159,10 +159,12 @@ class observer {
                 $airesponse = self::call_ai_service($payload);
 
                 if ($requireapproval) {
-                    self::create_approval_request($discussion, $forum, $airesponse, 'pending');
+                    // For the first post of the discussion, the parent is the firstpost.
+                    self::create_approval_request($discussion, $forum, $airesponse, 'pending', $discussion->firstpost);
                 } else {
-                    self::create_approval_request($discussion, $forum, $airesponse, 'approved');
-                    self::create_auto_reply($discussion, $airesponse);
+                    self::create_approval_request($discussion, $forum, $airesponse, 'approved', $discussion->firstpost);
+                    // Use the unified function that handles the parentpostid correctly.
+                    self::create_ai_reply($discussion, $airesponse, $discussion->firstpost);
                 }
             } catch (\Throwable $e) {
                 debugging('Error communicating with the AI service: ' . $e->getMessage(), DEBUG_DEVELOPER);
@@ -188,10 +190,18 @@ class observer {
      * @param object $discussion The discussion object.
      * @param object $forum The forum object.
      * @param string $message The AI-generated message.
-     * @param string $status The approval status ('pending' or 'approved').
+     * @param string $status The approval status ('pending' or 'approved'). Defaults to 'pending'.
+     * @param int|null $parentpostid The ID of the parent post to reply to, or null if top-level.
      * @return void
      */
-    private static function create_approval_request($discussion, $forum, string $message, string $status = 'pending'): void {
+    private static function create_approval_request(
+        $discussion,
+        $forum,
+        string $message,
+        string $status = 'pending',
+        ?int $parentpostid = null
+    ): void {
+
         global $DB;
 
         try {
@@ -205,6 +215,7 @@ class observer {
             $pending->message = $message;
             $pending->status = $status;
             $pending->approval_token = $approvaltoken;
+            $pending->parentpostid = $parentpostid; // Save the parent post ID.
             $pending->timecreated = time();
 
             $pendingid = $DB->insert_record('local_forum_ai_pending', $pending);
@@ -359,13 +370,14 @@ class observer {
     }
 
     /**
-     * Creates an automatic AI reply in the forum discussion.
+     * Creates an AI reply in the forum discussion (unified function for manual and automatic approval).
      *
      * @param object $discussion The discussion object.
      * @param string $message The AI-generated message content.
+     * @param int $parentpostid The ID of the parent post to reply to.
      * @return bool True on success, false on failure.
      */
-    public static function create_auto_reply($discussion, string $message): bool {
+    private static function create_ai_reply($discussion, string $message, int $parentpostid): bool {
         global $DB;
 
         try {
@@ -373,14 +385,30 @@ class observer {
             $teachers = \local_forum_ai_get_editingteachers($course->id);
 
             if (empty($teachers)) {
+                debugging('No teachers found to create AI reply', DEBUG_DEVELOPER);
                 return false;
             }
 
             $teacher = reset($teachers);
 
+            // Verify that the parentpostid exists and belongs to this discussion.
+            $parentpost = $DB->get_record('forum_posts', [
+                'id' => $parentpostid,
+                'discussion' => $discussion->id,
+            ]);
+
+            if (!$parentpost) {
+                debugging(
+                    'Parent post ID ' . $parentpostid . ' not found or does not belong to discussion ' . $discussion->id,
+                    DEBUG_DEVELOPER
+                );
+                // Use firstpost as fallback.
+                $parentpostid = $discussion->firstpost;
+            }
+
             $post = new \stdClass();
             $post->discussion = $discussion->id;
-            $post->parent = $discussion->firstpost;
+            $post->parent = $parentpostid; // Use the correct parentpostid.
             $post->userid = $teacher->id;
             $post->created = time();
             $post->modified = time();
@@ -391,8 +419,22 @@ class observer {
             $DB->insert_record('forum_posts', $post);
             return true;
         } catch (\Exception $e) {
+            debugging('Error in create_ai_reply: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
+    }
+
+    /**
+     * Creates an automatic AI reply in the forum discussion.
+     * @deprecated Use create_ai_reply() instead which handles both manual and automatic approval
+     *
+     * @param object $discussion The discussion object.
+     * @param string $message The AI-generated message content.
+     * @return bool True on success, false on failure.
+     */
+    public static function create_auto_reply($discussion, string $message): bool {
+        // Maintain for backward compatibility, but use the unified function.
+        return self::create_ai_reply($discussion, $message, $discussion->firstpost);
     }
 
     /**
@@ -431,5 +473,85 @@ class observer {
         $discussionid = $event->objectid;
 
         $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+    }
+
+    /**
+     * Handles when a user replies to an existing discussion.
+     *
+     * @param \mod_forum\event\post_created $event
+     * @return bool
+     */
+    public static function post_created(\mod_forum\event\post_created $event): bool {
+        global $DB;
+
+        try {
+            $data = $event->get_data();
+            $postid = $data['objectid'];
+
+            // Get the post and related discussion.
+            $post = $DB->get_record('forum_posts', ['id' => $postid], '*', MUST_EXIST);
+            $discussion = $DB->get_record('forum_discussions', ['id' => $post->discussion], '*', MUST_EXIST);
+            $forum = $DB->get_record('forum', ['id' => $discussion->forum], '*', MUST_EXIST);
+            $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+
+            // Do not process if the post is the first (already handled in discussion_created).
+            if ($post->id == $discussion->firstpost) {
+                return true;
+            }
+
+            // Load forum configuration.
+            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
+            $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
+            $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
+            $requireapproval = $config->require_approval ?? 1;
+
+            if (!$enabled) {
+                return true;
+            }
+
+            // Create the payload for the AI.
+            $payload = [
+            'course' => $course->fullname,
+            'forum' => $forum->name,
+            'discussion' => $discussion->name,
+            'userid' => $post->userid,
+            'post' => [
+                'subject' => $post->subject,
+                'message' => strip_tags($post->message),
+            ],
+            'prompt' => $replymessage,
+            ];
+
+            // Call the AI.
+            $airesponse = self::call_ai_service($payload);
+
+            if ($requireapproval) {
+                // Save the parentpostid to reply to the correct post.
+                self::create_approval_request($discussion, $forum, $airesponse, 'pending', $post->id);
+            } else {
+                self::create_approval_request($discussion, $forum, $airesponse, 'approved', $post->id);
+                // Use the unified function that handles the parentpostid correctly.
+                self::create_ai_reply($discussion, $airesponse, $post->id);
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            debugging('Error in post_created AI handler: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return true;
+        }
+    }
+
+    /**
+     * Creates an automatic AI reply to a specific forum post.
+     * @deprecated Use create_ai_reply() instead which handles both manual and automatic approval
+     *
+     * @param object $discussion The discussion object.
+     * @param object $post The post being replied to.
+     * @param string $message The AI-generated message content.
+     * @return bool True on success, false on failure.
+     */
+    private static function create_auto_reply_to_post($discussion, $post, string $message): bool {
+        // Maintain for backward compatibility, but use the unified function.
+        return self::create_ai_reply($discussion, $message, $post->id);
     }
 }

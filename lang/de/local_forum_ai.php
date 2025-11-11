@@ -55,6 +55,7 @@ $string['err_table_missing'] = 'Die Konfigurationstabelle für Forum KI existier
 $string['error_airequest'] = 'Fehler bei der Kommunikation mit dem KI-Dienst: {$a}';
 $string['error_saving'] = 'Fehler beim Speichern der Konfiguration: {$a}';
 $string['forum'] = 'Forum';
+$string['forum_ai:approveresponses'] = 'KI-generierte Forenantworten genehmigen oder ablehnen';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Zu Benachrichtigungen gehen';
 $string['historyresponses'] = 'KI-Forum Antwortverlauf';

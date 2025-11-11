@@ -16,7 +16,7 @@
 /**
  * Local forum ai render post
  *
- * @module      local_forum_ai/render_post
+ * @module      local_forum_ai/utils/render_post
  * @copyright   2025 Datacurso
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */

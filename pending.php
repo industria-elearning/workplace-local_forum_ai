@@ -51,7 +51,7 @@ $PAGE->navbar->ignore_active();
 local_forum_ai_cleanup_pending();
 $removed = local_forum_ai_cleanup_expired();
 if ($removed > 0) {
-    debugging("Forum AI: Se eliminaron {$removed} respuestas caducadas.", DEBUG_DEVELOPER);
+    debugging("Forum AI: {$removed} expired responses were removed.", DEBUG_DEVELOPER);
 }
 
 $pendings = local_forum_ai_get_pending($courseid, $forumid);
@@ -74,6 +74,9 @@ $templatecontext = [
     'pendings' => [],
     'headerlogo' => $logocontext,
 ];
+
+$templatecontext['backtocourse'] = get_string('backtocourse', 'local_forum_ai');
+$templatecontext['backurl'] = (new moodle_url('/course/view.php', ['id' => $courseid]))->out();
 
 foreach ($pendings as $p) {
     $user = (object)['id' => $p->creator_userid, 'firstname' => $p->firstname, 'lastname' => $p->lastname];

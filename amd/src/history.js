@@ -26,7 +26,7 @@ import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import { get_string as getString } from 'core/str';
 import Templates from 'core/templates';
-import { renderPost } from './utils/render_post';
+import { renderPost } from 'local_forum_ai/utils/render_post';
 
 /**
  * Initializes the listeners to display AI response history.

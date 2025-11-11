@@ -54,4 +54,11 @@ $observers = [
         'internal'    => false,
         'priority'    => 9999,
     ],
+    [
+        'eventname' => '\mod_forum\event\post_created',
+        'callback' => '\local_forum_ai\observer::post_created',
+        'includefile' => '/local/forum_ai/classes/observer.php',
+        'internal'    => false,
+        'priority'    => 9999,
+    ],
 ];
