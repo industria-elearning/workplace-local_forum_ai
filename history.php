@@ -59,7 +59,7 @@ $statusmap = [
 ];
 
 $renderer = $PAGE->get_renderer('core');
-$headerlogo = new \local_assign_ai\output\header_logo();
+$headerlogo = new \local_forum_ai\output\header_logo();
 $logocontext = $headerlogo->export_for_template($renderer);
 
 $templatecontext = [

@@ -133,8 +133,19 @@ class observer {
             $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
+            $enablediainitconversation = $config->enablediainitconversation ?? 0;
+            $allowedroles = $config->allowedroles ?? '';
+
+            $discussion = $DB->get_record('forum_discussions', ['id' => $discussionid], '*', MUST_EXIST);
+            if (!self::user_has_allowed_role($forumid, $discussion->userid, $allowedroles)) {
+                return true;
+            }
 
             if (!$enabled) {
+                return true;
+            }
+
+            if (empty($enablediainitconversation)) {
                 return true;
             }
 
@@ -504,6 +515,12 @@ class observer {
             $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
+            $allowedroles = $config->allowedroles ?? '';
+
+            // If the post author does not have any allowed role, do nothing.
+            if (!self::user_has_allowed_role($forum->id, $post->userid, $allowedroles)) {
+                return true;
+            }
 
             if (!$enabled) {
                 return true;
@@ -553,5 +570,45 @@ class observer {
     private static function create_auto_reply_to_post($discussion, $post, string $message): bool {
         // Maintain for backward compatibility, but use the unified function.
         return self::create_ai_reply($discussion, $message, $post->id);
+    }
+
+    /**
+     * Checks if the given user has any of the allowed roles in the module context.
+     *
+     * @param int $forumid
+     * @param int $userid
+     * @param array|string $allowedroles Array of role ids (as integers) OR CSV string.
+     * @return bool True if user has at least one allowed role; false otherwise.
+     */
+    private static function user_has_allowed_role(int $forumid, int $userid, $allowedroles): bool {
+        global $DB;
+
+        if (is_string($allowedroles)) {
+            $allowedroles = $allowedroles === '' ? [] : explode(',', $allowedroles);
+        }
+
+        if (empty($allowedroles)) {
+            return false;
+        }
+
+        $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('forum', $forum->id, $forum->course, false, MUST_EXIST);
+
+        $contextmodule = \context_module::instance($cm->id);
+        $contextcourse = \context_course::instance($forum->course);
+        $contextcat = $contextcourse->get_parent_context();
+        $contextsystem = \context_system::instance();
+        $contexts = [$contextmodule, $contextcourse, $contextcat, $contextsystem];
+
+        foreach ($contexts as $context) {
+            $userroles = get_user_roles($context, $userid);
+            foreach ($userroles as $ur) {
+                if (in_array((string)$ur->roleid, $allowedroles, true) || in_array((int)$ur->roleid, $allowedroles, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
