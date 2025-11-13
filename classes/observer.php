@@ -155,15 +155,13 @@ class observer {
             $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
 
             $payload = [
-            'course' => $course->fullname,
-            'forum' => $forum->name,
-            'discussion' => $discussion->name,
-            'userid' => $discussion->userid,
-            'post' => [
-                'subject' => $post->subject,
-                'message' => strip_tags($post->message),
-            ],
-            'prompt' => $replymessage,
+                'course' => $course->fullname,
+                'forum' => $forum->name,
+                'discussion' => $discussion->name,
+                'discussion_id' => $discussionid,
+                'userid' => $discussion->userid,
+                'postid' => $post->id,
+                'prompt' => $replymessage,
             ];
 
             try {
@@ -528,15 +526,13 @@ class observer {
 
             // Create the payload for the AI.
             $payload = [
-            'course' => $course->fullname,
-            'forum' => $forum->name,
-            'discussion' => $discussion->name,
-            'userid' => $post->userid,
-            'post' => [
-                'subject' => $post->subject,
-                'message' => strip_tags($post->message),
-            ],
-            'prompt' => $replymessage,
+                'course' => $course->fullname,
+                'forum' => $forum->name,
+                'discussion' => $discussion->name,
+                'discussion_id' => $discussion->id,
+                'postid' => $post->id,
+                'userid' => $post->userid,
+                'prompt' => $replymessage,
             ];
 
             // Call the AI.
