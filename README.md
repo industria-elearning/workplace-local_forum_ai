@@ -67,6 +67,8 @@ Once installed, Forum AI integrates seamlessly into the standard forum creation 
    Scroll to the “Datacurso Forum AI” section. Here, you can:
 
    - Enable the AI integration for this forum.
+   - Enable AI response in the message initial.
+   - Allowed roles for AI responses.
    - Enable AI response review, which requires teacher approval before posting AI responses.
    - Give the AI ​​extra directions
 

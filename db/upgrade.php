@@ -103,5 +103,32 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025110800, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2025111200) {
+        // Define field enablediainitconversation to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('enablediainitconversation', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enabled');
+
+        // Conditionally launch add field enablediainitconversation.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025111200, 'local', 'forum_ai');
+    }
+
+    if ($oldversion < 2025111300) {
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('allowedroles', XMLDB_TYPE_TEXT, null, null, null, null, null, 'enablediainitconversation');
+
+        // Add field if it does not exist.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025111300, 'local', 'forum_ai');
+    }
+
     return true;
 }

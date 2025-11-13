@@ -53,19 +53,10 @@ function local_forum_ai_extend_settings_navigation(settings_navigation $nav, con
         'courseid' => $courseid,
         'forumid'  => $forumid,
     ]);
-    $urlconfig = new moodle_url('/local/forum_ai/config.php', ['forumid' => $forumid]);
 
     $modulesettings = $nav->find('modulesettings', navigation_node::TYPE_SETTING);
 
     if ($modulesettings) {
-        $modulesettings->add(
-            get_string('pluginname', 'local_forum_ai'),
-            $urlconfig,
-            navigation_node::TYPE_SETTING,
-            null,
-            'forum_ai_config',
-            new pix_icon('i/settings', '')
-        );
         $modulesettings->add(
             get_string('pendingresponses', 'local_forum_ai'),
             $urlpending,
@@ -129,7 +120,7 @@ function local_forum_ai_extend_navigation_course($navigation, $course, $context)
 function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     global $DB, $USER;
 
-    // Only apply to forum modules.
+    // It only applies to the forum..
     if ($formwrapper->get_current()->modulename !== 'forum') {
         return;
     }
@@ -138,30 +129,41 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     $forumid = $cm->instance ?? null;
     $context = context_course::instance($cm->course);
 
-    // Show configuration fields only if the user has permission.
     if (!has_capability('local/forum_ai:approveresponses', $context, $USER)) {
         return;
     }
 
-    // Default values.
+    // Defaults values .
     $defaults = (object)[
         'enabled' => 0,
         'require_approval' => 1,
         'reply_message' => get_string('default_reply_message', 'local_forum_ai'),
+        'enablediainitconversation' => 0,
+        'allowedroles' => [],
+        'allowedroles_saved' => false,
     ];
 
-    // Load existing configuration if present.
+    // Load settings exists.
     if ($forumid && $DB->record_exists('local_forum_ai_config', ['forumid' => $forumid])) {
         $record = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
+
         $defaults->enabled = $record->enabled;
         $defaults->require_approval = $record->require_approval;
         $defaults->reply_message = $record->reply_message;
+        $defaults->enablediainitconversation = $record->enablediainitconversation ?? 0;
+        $defaults->allowedroles_saved = true;
+
+        if ($record->allowedroles === null || $record->allowedroles === '') {
+            $defaults->allowedroles = [];
+        } else {
+            $defaults->allowedroles = explode(',', $record->allowedroles);
+        }
     }
 
-    // Section header.
+    // Hader.
     $mform->addElement('header', 'local_forum_ai_header', get_string('datacurso_custom', 'local_forum_ai'));
 
-    // Enable AI.
+    // Enabled AI.
     $mform->addElement(
         'select',
         'local_forum_ai_enabled',
@@ -169,6 +171,48 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         [0 => get_string('no'), 1 => get_string('yes')]
     );
     $mform->setDefault('local_forum_ai_enabled', $defaults->enabled);
+
+    // Enabled AI message init.
+    $mform->addElement('select', 'enablediainitconversation', get_string('enablediainitconversation', 'local_forum_ai'), [
+        0 => get_string('no', 'local_forum_ai'),
+        1 => get_string('yes', 'local_forum_ai'),
+    ]);
+    $mform->setType('enablediainitconversation', PARAM_INT);
+    $mform->addHelpButton('enablediainitconversation', 'enablediainitconversation', 'local_forum_ai');
+    $mform->setDefault('enablediainitconversation', $defaults->enablediainitconversation);
+
+    // Get roles.
+    $roles = $DB->get_records('role', null, 'sortorder ASC');
+    $roleoptions = [];
+    $defaultroles = [];
+
+    // Student role default.
+    $studentroles = $DB->get_records('role', ['archetype' => 'student']);
+    if (!empty($studentroles)) {
+        foreach ($studentroles as $sr) {
+            $defaultroles[] = $sr->id;
+        }
+    }
+
+    foreach ($roles as $role) {
+        $roleoptions[$role->id] = role_get_name($role);
+    }
+
+    $mform->addElement(
+        'autocomplete',
+        'allowedroles',
+        get_string('allowedroles', 'local_forum_ai'),
+        $roleoptions,
+        ['multiple' => true, 'noselectionstring' => get_string('none')]
+    );
+    $mform->setType('allowedroles', PARAM_RAW);
+    $mform->addHelpButton('allowedroles', 'allowedroles', 'local_forum_ai');
+
+    if ($defaults->allowedroles_saved) {
+        $mform->setDefault('allowedroles', $defaults->allowedroles);
+    } else {
+        $mform->setDefault('allowedroles', $defaultroles);
+    }
 
     // Require approval.
     $mform->addElement(
@@ -179,7 +223,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     );
     $mform->setDefault('local_forum_ai_require_approval', $defaults->require_approval);
 
-    // Default AI reply message.
+    // Reply AI.
     $mform->addElement(
         'textarea',
         'local_forum_ai_reply_message',
@@ -211,6 +255,15 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     $config->enabled = $data->local_forum_ai_enabled ?? 0;
     $config->require_approval = $data->local_forum_ai_require_approval ?? 1;
     $config->reply_message = $data->local_forum_ai_reply_message ?? '';
+    $config->enablediainitconversation = $data->enablediainitconversation ?? 0;
+
+    // Save null if not selected roles.
+    if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
+        $config->allowedroles = implode(',', $data->allowedroles);
+    } else {
+        $config->allowedroles = null;
+    }
+
     $config->timemodified = time();
 
     if ($record) {
