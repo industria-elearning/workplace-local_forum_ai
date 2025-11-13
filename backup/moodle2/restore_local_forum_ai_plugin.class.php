@@ -86,6 +86,8 @@ class restore_local_forum_ai_plugin extends restore_local_plugin {
             $record->enabled = $config->enabled;
             $record->reply_message = $config->reply_message;
             $record->require_approval = $config->require_approval;
+            $record->allowedroles = $config->allowedroles ?? null;
+            $record->enablediainitconversation = $config->enablediainitconversation ?? 0;
             $record->timecreated = $config->timecreated;
             $record->timemodified = $config->timemodified;
 
