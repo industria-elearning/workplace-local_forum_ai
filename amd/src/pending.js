@@ -98,7 +98,14 @@ export const init = () => {
                 if (row) {
                     row.remove();
                 }
-            }).fail(Notification.exception);
+            })
+                .fail(ex => {
+                    const msg = ex.message;
+                    Notification.addNotification({
+                        message: msg,
+                        type: 'error'
+                    });
+                });
         });
     });
 };
