@@ -44,10 +44,6 @@ $PAGE->set_title(get_string('pendingresponses', 'local_forum_ai'));
 $PAGE->set_heading($course->fullname);
 $PAGE->requires->css('/local/forum_ai/styles/review.css');
 
-// Breadcrumbs: forum name -> this page.
-$PAGE->navbar->add($forum->name, new moodle_url('/mod/forum/view.php', ['id' => $cm->id]));
-$PAGE->navbar->add(get_string('pendingresponses', 'local_forum_ai'));
-
 local_forum_ai_cleanup_pending();
 $removed = local_forum_ai_cleanup_expired();
 if ($removed > 0) {
@@ -94,6 +90,13 @@ foreach ($pendings as $p) {
 }
 
 echo $OUTPUT->header();
+// Back to course button.
+$backurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+echo html_writer::link(
+    $backurl,
+    get_string('backtocourse', 'local_forum_ai'),
+    ['class' => 'btn btn-secondary mb-3']
+);
 echo $OUTPUT->render_from_template('local_forum_ai/pending', $templatecontext);
 $PAGE->requires->js_call_amd('local_forum_ai/pending', 'init');
 echo $OUTPUT->footer();

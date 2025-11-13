@@ -46,14 +46,19 @@ $PAGE->set_url('/local/forum_ai/config.php', ['forumid' => $forumid]);
 $PAGE->set_title(get_string('pluginname', 'local_forum_ai'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_context($context);
-$PAGE->navbar->add($forum->name, new moodle_url('/mod/forum/view.php', ['id' => $cm->id]));
-$PAGE->navbar->add(get_string('pluginname', 'local_forum_ai'));
 
 // Check if the table exists.
 $tableexists = $DB->get_manager()->table_exists('local_forum_ai_config');
 
 if (!$tableexists) {
     echo $OUTPUT->header();
+    // Back to course button.
+    $backurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+    echo html_writer::link(
+        $backurl,
+        get_string('backtocourse', 'local_forum_ai'),
+        ['class' => 'btn btn-secondary mb-3']
+    );
     echo $OUTPUT->notification(
         get_string('err_table_missing', 'local_forum_ai'),
         \core\output\notification::NOTIFY_ERROR
@@ -166,6 +171,13 @@ $templatedata = [
 ];
 
 echo $OUTPUT->header();
+// Back to course button.
+$backurl = new moodle_url('/course/view.php', ['id' => $course->id]);
+echo html_writer::link(
+    $backurl,
+    get_string('backtocourse', 'local_forum_ai'),
+    ['class' => 'btn btn-secondary mb-3']
+);
 echo $OUTPUT->heading(get_string('settings_forum', 'local_forum_ai', format_string($forum->name)));
 echo $OUTPUT->render_from_template('local_forum_ai/config_form', $templatedata);
 echo $OUTPUT->footer();
