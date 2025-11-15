@@ -23,7 +23,7 @@ require_once($CFG->libdir . '/externallib.php');
 use external_api;
 use external_function_parameters;
 use external_value;
-use context_system;
+use context_module;
 
 /**
  * External service to update a pending AI response in a forum.
@@ -66,8 +66,13 @@ class update_response extends external_api {
 
         $pending = $DB->get_record('local_forum_ai_pending', ['approval_token' => $params['token']], '*', MUST_EXIST);
 
-        // Permission validation.
-        $context = context_system::instance();
+        // Resolve forum context from the pending record.
+        $discussion = $DB->get_record('forum_discussions', ['id' => $pending->discussionid], '*', MUST_EXIST);
+        $forum = $DB->get_record('forum', ['id' => $pending->forumid], '*', MUST_EXIST);
+        $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+        $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+        $context = context_module::instance($cm->id);
         self::validate_context($context);
         require_capability('mod/forum:replypost', $context);
 
