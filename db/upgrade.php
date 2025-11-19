@@ -130,5 +130,19 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025111300, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2025111503) {
+        // Define field graderid to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('graderid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'require_approval');
+
+        // Conditionally launch add field graderid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025111503, 'local', 'forum_ai');
+    }
+
     return true;
 }

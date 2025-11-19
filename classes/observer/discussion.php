@@ -30,7 +30,6 @@ use mod_forum\event\discussion_deleted;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class discussion {
-
     /**
      * Handles discussion creation events.
      *
@@ -54,7 +53,7 @@ class discussion {
             $allowedroles = $config->allowedroles ?? '';
 
             $discussion = $DB->get_record('forum_discussions', ['id' => $discussionid], '*', MUST_EXIST);
-            
+
             if (!role_checker::user_has_allowed_role($forumid, $discussion->userid, $allowedroles)) {
                 return true;
             }
@@ -80,11 +79,13 @@ class discussion {
             try {
                 $airesponse = ai_service::call_ai_service($payload);
 
+                $replytext = $airesponse['reply'] ?? '';
+
                 if ($requireapproval) {
-                    approval::create_approval_request($discussion, $forum, $airesponse, 'pending', $discussion->firstpost);
+                    approval::create_approval_request($discussion, $forum, $replytext, 'pending', $discussion->firstpost);
                 } else {
-                    approval::create_approval_request($discussion, $forum, $airesponse, 'approved', $discussion->firstpost);
-                    approval::create_ai_reply($discussion, $airesponse, $discussion->firstpost);
+                    approval::create_approval_request($discussion, $forum, $replytext, 'approved', $discussion->firstpost);
+                    approval::create_ai_reply($discussion, $replytext, $discussion->firstpost);
                 }
             } catch (\Throwable $e) {
                 debugging('Error communicating with the AI service: ' . $e->getMessage(), DEBUG_DEVELOPER);

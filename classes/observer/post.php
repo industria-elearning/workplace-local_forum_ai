@@ -20,16 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use mod_forum\event\post_created;
 
-/**
- * Observer for post events.
- *
- * @package    local_forum_ai
- * @category   event
- * @copyright  2025 Datacurso
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class post {
-
     /**
      * Handles when a user replies to an existing discussion.
      *
@@ -43,25 +34,25 @@ class post {
             $data = $event->get_data();
             $postid = $data['objectid'];
 
-            // Get the post and related discussion.
+            // Retrieve original objects.
             $post = $DB->get_record('forum_posts', ['id' => $postid], '*', MUST_EXIST);
             $discussion = $DB->get_record('forum_discussions', ['id' => $post->discussion], '*', MUST_EXIST);
             $forum = $DB->get_record('forum', ['id' => $discussion->forum], '*', MUST_EXIST);
             $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
 
-            // Do not process if the post is the first (already handled in discussion_created).
+            // Skip first post of the discussion.
             if ($post->id == $discussion->firstpost) {
                 return true;
             }
 
-            // Load forum configuration.
+            // Load plugin configuration.
             $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
             $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $allowedroles = $config->allowedroles ?? '';
 
-            // If the post author does not have any allowed role, do nothing.
+            // Skip if user has no permissions.
             if (!role_checker::user_has_allowed_role($forum->id, $post->userid, $allowedroles)) {
                 return true;
             }
@@ -70,26 +61,49 @@ class post {
                 return true;
             }
 
-            // Create the payload for the AI.
+            $gradingenabled = ($forum->assessed != 0);
+
             $payload = [
-                'course' => $course->fullname,
-                'forum' => $forum->name,
-                'discussion' => $discussion->name,
-                'discussion_id' => $discussion->id,
-                'postid' => $post->id,
-                'userid' => $post->userid,
-                'prompt' => $replymessage,
+                'course'           => $course->fullname,
+                'forum'            => $forum->name,
+                'discussion'       => $discussion->name,
+                'discussion_id'    => $discussion->id,
+                'postid'           => $post->id,
+                'userid'           => $post->userid,
+                'prompt'           => $replymessage,
+                'grading_enabled'  => $gradingenabled,
+                'scale'            => $gradingenabled ? $forum->scale : null,
             ];
 
-            // Call the AI.
             $airesponse = ai_service::call_ai_service($payload);
 
+            $replytext = $airesponse['reply'] ?? '';
+            $grade = $airesponse['grade'] ?? null;
+
+            if ($gradingenabled && !is_null($grade)) {
+                $context = $event->get_context();
+                $cmid = $context->instanceid;
+
+                $rating = (object)[
+                    'contextid'    => $context->id,
+                    'component'    => 'mod_forum',
+                    'ratingarea'   => 'post',
+                    'itemid'       => $post->id,
+                    'scaleid'      => $forum->scale,
+                    'rating'       => $grade,
+                    'userid'       => 2,
+                    'timecreated'  => time(),
+                    'timemodified' => time(),
+                ];
+
+                $DB->insert_record('rating', $rating);
+            }
+
             if ($requireapproval) {
-                // Save the parentpostid to reply to the correct post.
-                approval::create_approval_request($discussion, $forum, $airesponse, 'pending', $post->id);
+                approval::create_approval_request($discussion, $forum, $replytext, 'pending', $post->id);
             } else {
-                approval::create_approval_request($discussion, $forum, $airesponse, 'approved', $post->id);
-                approval::create_ai_reply($discussion, $airesponse, $post->id);
+                approval::create_approval_request($discussion, $forum, $replytext, 'approved', $post->id);
+                approval::create_ai_reply($discussion, $replytext, $post->id);
             }
 
             return true;

@@ -32,7 +32,6 @@ use core\event\course_module_deleted;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class module {
-
     /**
      * Handles creation of "single type" forums.
      *
