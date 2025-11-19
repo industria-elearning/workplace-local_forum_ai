@@ -129,3 +129,4 @@ $string['statusrejected'] = 'Rejeté';
 $string['username'] = 'Créateur';
 $string['viewdetails'] = 'Détails';
 $string['yes'] = 'Oui';
+$string['grade'] = 'Note';

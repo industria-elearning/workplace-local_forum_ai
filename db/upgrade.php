@@ -144,5 +144,20 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025111503, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2025111505) {
+
+        // Define field grade to be added to local_forum_ai_pending.
+        $table = new xmldb_table('local_forum_ai_pending');
+        $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'message');
+
+        // Conditionally launch add field grade.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025111505, 'local', 'forum_ai');
+    }
+
     return true;
 }

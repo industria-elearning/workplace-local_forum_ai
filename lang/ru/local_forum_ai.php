@@ -129,3 +129,4 @@ $string['statusrejected'] = 'Отклонено';
 $string['username'] = 'Автор';
 $string['viewdetails'] = 'Подробнее';
 $string['yes'] = 'Да';
+$string['grade'] = 'Оценка';

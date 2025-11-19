@@ -129,3 +129,4 @@ $string['statusrejected'] = 'Ditolak';
 $string['username'] = 'Pembuat';
 $string['viewdetails'] = 'Detail';
 $string['yes'] = 'Ya';
+$string['grade'] = 'Nilai';

@@ -35,6 +35,7 @@
                 <FIELD NAME="creator_userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
                 <FIELD NAME="subject" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" />
                 <FIELD NAME="message" TYPE="text" NOTNULL="true" SEQUENCE="false" />
+                <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
                 <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending"
                     SEQUENCE="false" />
                 <FIELD NAME="approval_token" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" />

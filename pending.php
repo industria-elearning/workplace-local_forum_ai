@@ -63,6 +63,7 @@ $templatecontext = [
     'col_message' => get_string('col_message', 'local_forum_ai'),
     'col_user' => get_string('username', 'local_forum_ai'),
     'col_preview' => get_string('preview', 'local_forum_ai'),
+    'col_grade' => get_string('grade', 'local_forum_ai'),
     'col_actions' => get_string('actions', 'local_forum_ai'),
     'approve' => get_string('approve', 'local_forum_ai'),
     'reject' => get_string('reject', 'local_forum_ai'),
@@ -84,6 +85,7 @@ foreach ($pendings as $p) {
         'discussionmsg'   => format_text($p->discussionmessage, $p->messageformat),
         'userfullname' => fullname($user),
         'preview' => shorten_text(strip_tags($p->message), 100),
+        'grade' => format_string($p->grade),
         'viewdetails'    => get_string('viewdetails', 'local_forum_ai'),
         'token' => $p->approval_token,
     ];
