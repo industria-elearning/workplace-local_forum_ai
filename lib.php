@@ -224,8 +224,6 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     );
     $mform->setDefault('local_forum_ai_require_approval', $defaults->require_approval);
 
-    // ---------- ADD: AUTOGRADER USER (RATE + GRADE) ----------
-
     // Users enrolled who can either rate or grade.
     $eligibleusers = [];
 
@@ -313,6 +311,7 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     $config->require_approval = $data->local_forum_ai_require_approval ?? 1;
     $config->reply_message = $data->local_forum_ai_reply_message ?? '';
     $config->enablediainitconversation = $data->enablediainitconversation ?? 0;
+    $config->graderid = $data->local_forum_ai_grader ?? null;
 
     // Save null if not selected roles.
     if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
