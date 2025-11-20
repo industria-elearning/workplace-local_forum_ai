@@ -82,7 +82,7 @@ foreach ($records as $r) {
         'forumname' => format_string($r->forumname),
         'discussionname' => format_string($r->discussionname),
         'discussionmsg' => shorten_text(strip_tags($r->message), 100),
-        'grade' => format_string($r->grade),
+        'grade' => (isset($r->grade) && $r->grade !== '' ? format_string($r->grade) : '-'),
         'userfullname' => fullname($user),
         'status' => $statusmap[$r->status] ?? $r->status,
         'viewdetails' => get_string('viewdetails', 'local_forum_ai'),

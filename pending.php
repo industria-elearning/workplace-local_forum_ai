@@ -85,7 +85,7 @@ foreach ($pendings as $p) {
         'discussionmsg'   => format_text($p->discussionmessage, $p->messageformat),
         'userfullname' => fullname($user),
         'preview' => shorten_text(strip_tags($p->message), 100),
-        'grade' => format_string($p->grade),
+        'grade' => (isset($p->grade) && $p->grade !== '' ? format_string($p->grade) : '-'),
         'viewdetails'    => get_string('viewdetails', 'local_forum_ai'),
         'token' => $p->approval_token,
     ];
