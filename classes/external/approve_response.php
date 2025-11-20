@@ -135,7 +135,7 @@ class approve_response extends external_api {
             // ★ APPLY RATING WHEN MANUAL APPROVAL ★
             // --------------------------------------------------------
             $gradingenabled = ($forum->assessed != 0);
-            
+
             if ($gradingenabled && !empty($pending->grade) && !empty($pending->parentpostid)) {
                 try {
                     // Load plugin configuration to get grader user
@@ -147,7 +147,7 @@ class approve_response extends external_api {
                     } else {
                         // Get the original post that was graded
                         $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
-                        
+
                         if ($originalpost) {
                             // Temporarily switch to configured grader user
                             $graderuser = \core_user::get_user($graderid, '*', MUST_EXIST);

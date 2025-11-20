@@ -84,7 +84,6 @@ class post {
             $grade = $gradingenabled ? ($airesponse['grade'] ?? null) : null;
 
             if (!$requireapproval && $gradingenabled && $grade !== null && $graderid) {
-
                 $context = $event->get_context();
                 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
@@ -118,7 +117,6 @@ class post {
             }
 
             if ($requireapproval) {
-
                 approval::create_approval_request(
                     $discussion,
                     $forum,
@@ -127,9 +125,7 @@ class post {
                     $post->id,
                     $grade
                 );
-
             } else {
-
                 approval::create_approval_request(
                     $discussion,
                     $forum,
@@ -143,7 +139,6 @@ class post {
             }
 
             return true;
-
         } catch (\Throwable $e) {
             debugging('Error in post_created AI handler: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return true;
