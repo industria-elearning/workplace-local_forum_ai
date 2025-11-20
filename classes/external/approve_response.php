@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/externallib.php');
 require_once(__DIR__ . '/../../locallib.php');
+require_once($CFG->dirroot . '/rating/lib.php');
 
 use external_api;
 use external_function_parameters;
@@ -128,9 +129,59 @@ class approve_response extends external_api {
             $post->messageformat = FORMAT_HTML;
             $post->messagetrust  = 1;
 
-            forum_add_new_post($post, null);
+            $newpostid = forum_add_new_post($post, null);
 
-            $USER = $realuser;
+            // --------------------------------------------------------
+            // ★ APPLY RATING WHEN MANUAL APPROVAL ★
+            // --------------------------------------------------------
+            $gradingenabled = ($forum->assessed != 0);
+            
+            if ($gradingenabled && !empty($pending->grade) && !empty($pending->parentpostid)) {
+                try {
+                    // Load plugin configuration to get grader user
+                    $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
+                    $graderid = $config->graderid ?? null;
+
+                    if (!$graderid) {
+                        debugging('No grader configured for AI ratings in forum ' . $forum->id, DEBUG_DEVELOPER);
+                    } else {
+                        // Get the original post that was graded
+                        $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
+                        
+                        if ($originalpost) {
+                            // Temporarily switch to configured grader user
+                            $graderuser = \core_user::get_user($graderid, '*', MUST_EXIST);
+                            $USER = $graderuser;
+
+                            $rm = new \rating_manager();
+
+                            $result = $rm->add_rating(
+                                $cm,
+                                $context,
+                                'mod_forum',
+                                'post',
+                                $pending->parentpostid,
+                                $forum->scale,
+                                $pending->grade,
+                                $originalpost->userid,
+                                $forum->assessed
+                            );
+
+                            if (!empty($result->error)) {
+                                debugging('Error adding AI rating on manual approval: ' . $result->error, DEBUG_DEVELOPER);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    debugging('Exception adding rating on manual approval: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                } finally {
+                    // Always restore the original user
+                    $USER = $realuser;
+                }
+            } else {
+                // Restore user even if rating not applied
+                $USER = $realuser;
+            }
 
             $pending->status       = 'approved';
             $pending->approved_at  = time();

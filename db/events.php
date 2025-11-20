@@ -56,4 +56,8 @@ $observers = [
         'internal'    => false,
         'priority'    => 9999,
     ],
+    [
+        'eventname' => '\mod_forum\event\post_deleted',
+        'callback'  => 'local_forum_ai\observer\post::post_deleted',
+    ],
 ];

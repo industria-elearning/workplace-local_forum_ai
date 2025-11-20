@@ -37,6 +37,7 @@ class approval {
      * @param string $message The AI-generated message.
      * @param string $status The approval status ('pending' or 'approved'). Defaults to 'pending'.
      * @param int|null $parentpostid The ID of the parent post to reply to, or null if top-level.
+     * @param int|null $grade AI-generated grade, if applicable.
      * @return void
      */
     public static function create_approval_request(
@@ -44,7 +45,8 @@ class approval {
         $forum,
         string $message,
         string $status = 'pending',
-        ?int $parentpostid = null
+        ?int $parentpostid = null,
+        ?int $grade = null
     ): void {
         global $DB;
 
@@ -61,6 +63,10 @@ class approval {
             $pending->approval_token = $approvaltoken;
             $pending->parentpostid = $parentpostid;
             $pending->timecreated = time();
+
+            if ($forum->assessed != 0 && $grade !== null) {
+                $pending->grade = $grade;
+            }
 
             $pendingid = $DB->insert_record('local_forum_ai_pending', $pending);
 

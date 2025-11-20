@@ -145,7 +145,6 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025111505) {
-
         // Define field grade to be added to local_forum_ai_pending.
         $table = new xmldb_table('local_forum_ai_pending');
         $field = new xmldb_field('grade', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'message');

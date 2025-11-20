@@ -19,6 +19,8 @@ namespace local_forum_ai\observer;
 defined('MOODLE_INTERNAL') || die();
 
 use mod_forum\event\post_created;
+use mod_forum\event\post_deleted;
+require_once($CFG->dirroot . '/rating/lib.php');
 
 class post {
     /**
@@ -28,7 +30,7 @@ class post {
      * @return bool
      */
     public static function post_created(post_created $event): bool {
-        global $DB;
+        global $DB, $USER;
 
         try {
             $data = $event->get_data();
@@ -51,6 +53,7 @@ class post {
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $allowedroles = $config->allowedroles ?? '';
+            $graderid = $config->graderid ?? null;
 
             // Skip if user has no permissions.
             if (!role_checker::user_has_allowed_role($forum->id, $post->userid, $allowedroles)) {
@@ -69,7 +72,7 @@ class post {
                 'discussion'       => $discussion->name,
                 'discussion_id'    => $discussion->id,
                 'postid'           => $post->id,
-                'userid'           => $post->userid,
+                'userid'           => $graderid ?? 2,
                 'prompt'           => $replymessage,
                 'grading_enabled'  => $gradingenabled,
                 'scale'            => $gradingenabled ? $forum->scale : null,
@@ -78,38 +81,86 @@ class post {
             $airesponse = ai_service::call_ai_service($payload);
 
             $replytext = $airesponse['reply'] ?? '';
-            $grade = $airesponse['grade'] ?? null;
+            $grade = $gradingenabled ? ($airesponse['grade'] ?? null) : null;
 
-            if ($gradingenabled && !is_null($grade)) {
+            if (!$requireapproval && $gradingenabled && $grade !== null && $graderid) {
+
                 $context = $event->get_context();
-                $cmid = $context->instanceid;
+                $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-                $rating = (object)[
-                    'contextid'    => $context->id,
-                    'component'    => 'mod_forum',
-                    'ratingarea'   => 'post',
-                    'itemid'       => $post->id,
-                    'scaleid'      => $forum->scale,
-                    'rating'       => $grade,
-                    'userid'       => 2,
-                    'timecreated'  => time(),
-                    'timemodified' => time(),
-                ];
+                // Temporarily switch to configured grader user
+                $originaluser = $USER;
+                $USER = \core_user::get_user($graderid, '*', MUST_EXIST);
 
-                $DB->insert_record('rating', $rating);
+                try {
+                    $rm = new \rating_manager();
+
+                    $result = $rm->add_rating(
+                        $cm,
+                        $context,
+                        'mod_forum',
+                        'post',
+                        $post->id,
+                        $forum->scale,
+                        $grade,
+                        $post->userid,
+                        $forum->assessed
+                    );
+
+                    if (!empty($result->error)) {
+                        debugging('Error adding AI rating: ' . $result->error, DEBUG_DEVELOPER);
+                    }
+                } finally {
+                    $USER = $originaluser;
+                }
+            } else if (!$requireapproval && $gradingenabled && $grade !== null && !$graderid) {
+                debugging('Grading enabled but no grader configured for forum ' . $forum->id, DEBUG_DEVELOPER);
             }
 
             if ($requireapproval) {
-                approval::create_approval_request($discussion, $forum, $replytext, 'pending', $post->id);
+
+                approval::create_approval_request(
+                    $discussion,
+                    $forum,
+                    $replytext,
+                    'pending',
+                    $post->id,
+                    $grade
+                );
+
             } else {
-                approval::create_approval_request($discussion, $forum, $replytext, 'approved', $post->id);
+
+                approval::create_approval_request(
+                    $discussion,
+                    $forum,
+                    $replytext,
+                    'approved',
+                    $post->id,
+                    $grade
+                );
+
                 approval::create_ai_reply($discussion, $replytext, $post->id);
             }
 
             return true;
+
         } catch (\Throwable $e) {
             debugging('Error in post_created AI handler: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return true;
         }
+    }
+
+    /**
+     * Triggered when a post is deleted.
+     *
+     * @param post_deleted $event
+     * @return void
+     */
+    public static function post_deleted(post_deleted $event): void {
+        global $DB;
+
+        $postid = $event->objectid;
+
+        $DB->delete_records('local_forum_ai_pending', ['parentpostid' => $postid]);
     }
 }
