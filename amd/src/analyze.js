@@ -16,45 +16,38 @@
 /**
  * Forum AI grading integration.
  *
- * Detects when the forum grading panel is opened and displays the
- * "AI Review" button, keeping it visible even when switching between
- * students during the grading process.
+ * Displays and manages the AI Review button inside the forum grading panel,
+ * keeping it persistent and preventing multiple submissions by showing
+ * a loading state.
  *
  * @module      local_forum_ai/analyze
  * @copyright   2025 Datacurso
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, PubSub, Ajax) {
+define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, Ajax, Str) {
 
     /**
      * Initializes the AI button integration for forum grading.
      *
-     * Sets up observers, event listeners and DOM manipulation logic to
-     * ensure the AI review button is correctly injected and remains
-     * visible while navigating between students.
-     *
      * @returns {void}
      */
     function init() {
-        Log.debug('Forum AI Review: Initialized');
 
         const $button = $('#forum-ai-review-btn');
         let lastState = null;
 
         if ($button.length === 0) {
-            Log.error('Forum AI Review: Button not found');
             return;
         }
 
         /**
          * Injects the AI button into the appropriate grading container
-         * depending on the active grading method.
-         * The button is automatically re-injected whenever Moodle rebuilds the DOM.
          *
          * @returns {void}
          */
         const injectButtonIntoGrader = function () {
+
             const simpleInput = document.querySelector('input[name="grade"]');
             const rubricForm = document.querySelector('form[id^="gradingform_rubric"]');
             const guideForm = document.querySelector('form[id^="gradingform_guide"]');
@@ -77,7 +70,6 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
                 return;
             }
 
-            // Always move the button to the active container
             if (!$button.parent().is(target)) {
                 $button.detach().prependTo(target).show();
                 lastState = 'visible';
@@ -95,19 +87,27 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
         setInterval(injectButtonIntoGrader, 800);
 
         /**
-         * Click event handler for the AI button.
+         * Handles AI button click event.
          *
          * @param {Event} e Click event.
          */
-        $(document).on('click', '#forum-ai-review-btn', function (e) {
+        $(document).on('click', '#forum-ai-review-btn', async function (e) {
             e.preventDefault();
+
+            const button = this;
+
+            if (button.classList.contains('forum-ai-btnloading')) {
+                return;
+            }
+
+            await setLoading(button);
 
             const cmid = new URLSearchParams(window.location.search).get('id');
             const userNode = document.querySelector('[data-region="name"][data-userid]');
             const userid = userNode ? userNode.getAttribute('data-userid') : null;
 
             if (!cmid || !userid) {
-                alert('Unable to detect the forum or the student');
+                resetLoading(button);
                 return;
             }
 
@@ -121,27 +121,27 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
 
                 const data = JSON.parse(response.data);
 
-                switch (response.type) {
-                    case 'simple':
-                        applySimpleGrade(data);
-                        break;
-                    case 'rubric':
-                        applyRubricGrade(data);
-                        break;
-                    case 'guide':
-                        applyGuideGrade(data);
-                        break;
+                if (response.type === 'simple') {
+                    applySimpleGrade(data);
                 }
 
-            }).fail(function (error) {
-                Log.error('Forum AI Review error:', error);
-                alert('AI Error: ' + (error.message || 'Unknown error'));
+                if (response.type === 'rubric') {
+                    applyRubricGrade(data);
+                }
+
+                if (response.type === 'guide') {
+                    applyGuideGrade(data);
+                }
+
+                resetLoading(button);
+
+            }).fail(function () {
+                resetLoading(button);
             });
         });
 
         /**
          * Observes changes in the user selector to re-inject the button
-         * when Moodle dynamically switches the evaluated student.
          *
          * @returns {void}
          */
@@ -161,10 +161,41 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
     }
 
     /**
+     * Sets loading state on button.
+     *
+     * @param {HTMLElement} button
+     * @returns {Promise<void>}
+     */
+    async function setLoading(button) {
+
+        const loadingText = await Str.get_string('evaluatingwithai', 'local_forum_ai');
+
+        button.dataset.originalText = button.innerHTML;
+        button.classList.add('forum-ai-btnloading');
+        button.setAttribute('aria-disabled', 'true');
+        button.style.pointerEvents = 'none';
+        button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + loadingText;
+    }
+
+    /**
+     * Restores button after processing.
+     *
+     * @param {HTMLElement} button
+     */
+    function resetLoading(button) {
+
+        const originalText = button.dataset.originalText || '';
+
+        button.classList.remove('forum-ai-btnloading');
+        button.removeAttribute('aria-disabled');
+        button.style.pointerEvents = '';
+        button.innerHTML = originalText;
+    }
+
+    /**
      * Applies a direct simple grade.
      *
-     * @param {Object} data Data returned by the AI.
-     * @param {number} data.grade Final numeric grade.
+     * @param {Object} data
      */
     function applySimpleGrade(data) {
         $('input[name="grade"]').val(data.grade);
@@ -173,7 +204,7 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
     /**
      * Applies grading using rubric structure.
      *
-     * @param {Array} rubricData Rubric data returned by the AI.
+     * @param {Array} rubricData
      */
     function applyRubricGrade(rubricData) {
 
@@ -187,7 +218,6 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
                     return;
                 }
 
-                // Select level by description
                 const selectedLevel = crit.levels[0];
 
                 container.querySelectorAll('label').forEach(label => {
@@ -199,12 +229,10 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
                     }
                 });
 
-                // Inject feedback into textarea
                 const textarea = container.querySelector('textarea');
                 if (textarea && crit.reply) {
                     textarea.value = crit.reply;
                 }
-
             });
 
         });
@@ -213,7 +241,7 @@ define(['jquery', 'core/log', 'core/pubsub', 'core/ajax'], function ($, Log, Pub
     /**
      * Applies grading using marking guide structure.
      *
-     * @param {Object} guideData Object containing criteria evaluated by AI.
+     * @param {Object} guideData
      */
     function applyGuideGrade(guideData) {
 

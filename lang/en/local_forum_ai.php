@@ -62,6 +62,7 @@ $string['enablediainitconversation_help'] = 'Enabling this option will allow the
 $string['err_table_missing'] = 'The configuration table for Forum AI does not exist. Please update the plugin from Site Administration > Notifications.';
 $string['error_airequest'] = 'Error communicating with AI service: {$a}';
 $string['error_saving'] = 'Error saving configuration: {$a}';
+$string['evaluatingwithai'] = 'Evaluating with AI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Approve or reject AI-generated forum responses';
 $string['forumname'] = 'Forum';

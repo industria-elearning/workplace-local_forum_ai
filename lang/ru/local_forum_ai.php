@@ -61,6 +61,7 @@ $string['enablediainitconversation_help'] = 'Если включить эту о
 $string['err_table_missing'] = 'Таблица конфигурации для форума ИИ не существует. Пожалуйста, обновите плагин через Администрирование сайта > Уведомления.';
 $string['error_airequest'] = 'Ошибка при связи со службой ИИ: {$a}';
 $string['error_saving'] = 'Ошибка при сохранении конфигурации: {$a}';
+$string['evaluatingwithai'] = 'Оценка с помощью ИИ...';
 $string['forum'] = 'Форум';
 $string['forum_ai:approveresponses'] = 'Одобрить или отклонить ответы форума, сгенерированные ИИ';
 $string['forumname'] = 'Форум';

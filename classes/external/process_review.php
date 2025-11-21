@@ -102,7 +102,7 @@ class process_review extends external_api {
             ];
         }
 
-        throw new \moodle_exception('Formato de respuesta IA no reconocido');
+        throw new \moodle_exception('Unrecognized AI response format');
     }
 
     /**
@@ -116,9 +116,8 @@ class process_review extends external_api {
      */
     public static function execute_returns() {
         return new external_single_structure([
-        'type' => new external_value(PARAM_ALPHA, 'Tipo de evaluación'),
-        'data' => new external_value(PARAM_RAW, 'Respuesta IA serializada'),
-        'payload_debug' => new external_value(PARAM_RAW, 'Payload enviado a IA'),
+        'type' => new external_value(PARAM_ALPHA, 'Evaluation type'),
+        'data' => new external_value(PARAM_RAW, 'Serialized AI Response'),
         ]);
     }
 }

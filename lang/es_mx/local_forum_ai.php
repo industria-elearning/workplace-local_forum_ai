@@ -62,6 +62,7 @@ $string['enablediainitconversation_help'] = 'Al habilitar esta opción, la IA po
 $string['err_table_missing'] = 'La tabla de configuración para Forum AI no existe. Por favor, actualiza el plugin desde Administración del sitio > Notificaciones.';
 $string['error_airequest'] = 'Error al comunicarse con el servicio de IA: {$a}';
 $string['error_saving'] = 'Error al guardar la configuración: {$a}';
+$string['evaluatingwithai'] = 'Evaluando con IA...';
 $string['forum'] = 'Foro';
 $string['forum_ai:approveresponses'] = 'Aprobar o rechazar respuestas generadas por IA en los foros';
 $string['forumname'] = 'Foro';

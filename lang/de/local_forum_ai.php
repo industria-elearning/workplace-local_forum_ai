@@ -61,6 +61,7 @@ $string['enablediainitconversation_help'] = 'Wenn diese Option aktiviert ist, ka
 $string['err_table_missing'] = 'Die Konfigurationstabelle für Forum KI existiert nicht. Bitte aktualisiere das Plugin unter Website-Administration > Mitteilungen.';
 $string['error_airequest'] = 'Fehler bei der Kommunikation mit dem KI-Dienst: {$a}';
 $string['error_saving'] = 'Fehler beim Speichern der Konfiguration: {$a}';
+$string['evaluatingwithai'] = 'Auswertung mit KI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'KI-generierte Forenantworten genehmigen oder ablehnen';
 $string['forumname'] = 'Forum';
