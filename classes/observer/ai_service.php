@@ -16,9 +16,8 @@
 
 namespace local_forum_ai\observer;
 
-defined('MOODLE_INTERNAL') || die();
-
 use aiprovider_datacurso\httpclient\ai_services_api;
+use local_forum_ai\utils;
 
 /**
  * Class for AI service communication.
@@ -30,15 +29,41 @@ use aiprovider_datacurso\httpclient\ai_services_api;
  */
 class ai_service {
     /**
-     * Sends the payload to the external AI service and returns its reply.
+     * Send the payload to the external AI service and return its response for post rating individually.
      *
      * @param array $payload Data to send to the AI service.
-     * @return string The AI-generated reply.
+     * @return array The AI-generated reply.
      * @throws \moodle_exception If the request fails.
      */
-    public static function call_ai_service(array $payload): string {
+    public static function call_ai_service(array $payload): array {
+        $payload = utils::normalize_payload($payload);
+
         $client = new ai_services_api();
         $response = $client->request('POST', '/forum/chat', $payload);
-        return $response['reply'];
+
+        return [
+        'reply' => $response['reply'] ?? null,
+        'grade' => $response['grade'] ?? 0,
+        ];
+    }
+
+    /**
+     * Send the payload to the external AI service and return its response for rating all of the user's posts.
+     *
+     * @param array $payload Data to send to the AI service.
+     * @return array The AI-generated reply.
+     * @throws \moodle_exception If the request fails.
+     */
+    public static function call_ai_service_global(array $payload): array {
+        $payload = utils::normalize_payload($payload);
+
+        $client = new ai_services_api();
+        $response = $client->request('POST', '/forum/chat', $payload);
+
+        if (is_array($response)) {
+            return $response;
+        }
+
+        return [];
     }
 }

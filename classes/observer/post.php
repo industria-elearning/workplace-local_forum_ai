@@ -22,12 +22,23 @@ use mod_forum\event\post_created;
 use mod_forum\event\post_deleted;
 require_once($CFG->dirroot . '/rating/lib.php');
 
+/**
+ * Forum post event observer for AI integration.
+ *
+ * This observer reacts to forum post creation and deletion events in order
+ * to trigger AI-based responses, automated grading, and approval workflows
+ * according to the plugin configuration and forum settings.
+ *
+ * @package local_forum_ai
+ * @copyright 2025 Datacurso
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class post {
     /**
-     * Handles when a user replies to an existing discussion.
+     * Handles the post_created event when a user replies to a forum discussion.
      *
-     * @param post_created $event
-     * @return bool
+     * @param post_created $event Forum post created event.
+     * @return bool Always returns true to prevent Moodle event interruption.
      */
     public static function post_created(post_created $event): bool {
         global $DB, $USER;
@@ -87,7 +98,7 @@ class post {
                 $context = $event->get_context();
                 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-                // Temporarily switch to configured grader user
+                // Temporarily switch to configured grader user.
                 $originaluser = $USER;
                 $USER = \core_user::get_user($graderid, '*', MUST_EXIST);
 
@@ -146,9 +157,9 @@ class post {
     }
 
     /**
-     * Triggered when a post is deleted.
+     * Handles the post_deleted event when a forum post is removed.
      *
-     * @param post_deleted $event
+     * @param post_deleted $event Forum post deleted event.
      * @return void
      */
     public static function post_deleted(post_deleted $event): void {

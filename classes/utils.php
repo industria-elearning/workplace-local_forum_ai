@@ -16,6 +16,9 @@
 
 namespace local_forum_ai;
 
+use local_forum_ai\helper\rubric;
+use local_forum_ai\helper\guide;
+
 /**
  * Utility functions for local_forum_ai.
  *
@@ -58,5 +61,76 @@ class utils {
             }
         });
         return $payload;
+    }
+
+    /**
+     * Builds the structured payload for the AI forum evaluation service.
+     *
+     * This method gathers all necessary data related to a user's participation
+     * in a specific forum, including discussions, posts, grading configuration
+     * and associated evaluation method (simple grade, rubric or guide).
+     *
+     * The return structure is designed to be directly consumed by the AI
+     * service responsible for generating automatic assessments.
+     *
+     * @param int $cmid Course module ID of the forum.
+     * @param int $userid User ID whose participation will be analyzed.
+     * @return array Structured payload ready to be sent to the AI service.
+     */
+    public static function build_forum_ai_payload(int $cmid, int $userid): array {
+        global $DB, $CFG;
+
+        require_once($CFG->dirroot . '/grade/grading/lib.php');
+
+        $cm = get_coursemodule_from_id('forum', $cmid, 0, false, MUST_EXIST);
+        $forum = $DB->get_record('forum', ['id' => $cm->instance], '*', MUST_EXIST);
+
+        // Get active grading method from grading areas.
+        $context = \context_module::instance($cmid);
+        $gradingmanager = get_grading_manager($context, 'mod_forum', 'forum');
+        $activemethod = $gradingmanager->get_active_method();
+
+        // Initialize grading data containers.
+        $rubricdata = null;
+        $guidedata = null;
+
+        // Only retrieve data for the currently configured grading method.
+        if ($activemethod === 'rubric') {
+            $rubricdata = rubric::get($cmid);
+        } else if ($activemethod === 'guide') {
+            $guidedata = guide::get($cmid);
+        }
+
+        $posts = $DB->get_records_sql("
+            SELECT d.id, d.name, p.message
+            FROM {forum_discussions} d
+            JOIN {forum_posts} p ON p.discussion = d.id
+            WHERE p.userid = ?
+            AND d.forum = ?
+        ", [$userid, $forum->id]);
+
+        $discussions = [];
+
+        foreach ($posts as $p) {
+            $discussions[] = [
+                'discussion' => $p->name,
+                'discussion_id' => $p->id,
+                'answer' => trim(strip_tags($p->message)),
+            ];
+        }
+
+        return [
+            [
+                'userid' => $userid,
+                'participation' => [
+                    'forum_id' => $forum->id,
+                    'forum' => $forum->name,
+                    'scale' => $forum->scale,
+                    'rubric' => $rubricdata,
+                    'assessment_guide' => $guidedata,
+                    'discussions' => $discussions,
+                ],
+            ],
+        ];
     }
 }

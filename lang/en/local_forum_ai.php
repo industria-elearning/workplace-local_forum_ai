@@ -31,6 +31,7 @@ $string['ai_response'] = 'AI Response';
 $string['ai_response_approved'] = 'AI Response Approved';
 $string['ai_response_proposed'] = 'Proposed AI Response';
 $string['ai_response_rejected'] = 'AI Response Rejected';
+$string['ai_review_button'] = 'Review with AI';
 $string['aiproposed'] = 'Proposed AI Response';
 $string['allowedroles'] = 'Allowed roles for AI responses';
 $string['allowedroles_help'] = 'Select which user roles the AI is allowed to respond to. If none are selected, the AI will not respond to any users.';

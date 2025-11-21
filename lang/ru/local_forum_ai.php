@@ -31,6 +31,7 @@ $string['ai_response'] = 'Ответ ИИ';
 $string['ai_response_approved'] = 'Ответ ИИ одобрен';
 $string['ai_response_proposed'] = 'Предложенный ответ ИИ';
 $string['ai_response_rejected'] = 'Ответ ИИ отклонён';
+$string['ai_review_button'] = 'Проверить с ИИ';
 $string['aiproposed'] = 'Предложенный ответ ИИ';
 $string['allowedroles'] = 'Разрешённые роли для ответов ИИ';
 $string['allowedroles_help'] = 'Выберите роли пользователей, которым разрешено получать ответы от ИИ. Если ни одна не выбрана, ИИ не будет отвечать ни одному пользователю.';

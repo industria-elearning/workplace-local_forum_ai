@@ -31,6 +31,7 @@ $string['ai_response'] = 'KI-Antwort';
 $string['ai_response_approved'] = 'KI-Antwort genehmigt';
 $string['ai_response_proposed'] = 'Vorgeschlagene KI-Antwort';
 $string['ai_response_rejected'] = 'KI-Antwort abgelehnt';
+$string['ai_review_button'] = 'Mit KI überprüfen';
 $string['aiproposed'] = 'Vorgeschlagene KI-Antwort';
 $string['allowedroles'] = 'Zulässige Rollen für KI-Antworten';
 $string['allowedroles_help'] = 'Wählen Sie aus, auf welche Benutzerrollen die KI antworten darf. Wenn keine ausgewählt sind, antwortet die KI auf keine Benutzer.';

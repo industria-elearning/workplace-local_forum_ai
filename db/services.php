@@ -60,4 +60,11 @@ $functions = [
         'capabilities' => 'mod/forum:viewdiscussion',
         'ajax'        => true,
     ],
+    'local_forum_ai_process_review' => [
+        'classname'   => 'local_forum_ai\\external\\process_review',
+        'methodname'  => 'execute',
+        'description' => 'Generates real JSON and sends it to the AI',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
 ];

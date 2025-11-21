@@ -16,8 +16,6 @@
 
 namespace local_forum_ai\observer;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class for role checking functionality.
  *

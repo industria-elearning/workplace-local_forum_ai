@@ -31,6 +31,7 @@ $string['ai_response'] = 'Respuesta IA';
 $string['ai_response_approved'] = 'Respuesta IA Aprobada';
 $string['ai_response_proposed'] = 'Respuesta IA propuesta';
 $string['ai_response_rejected'] = 'Respuesta IA Rechazada';
+$string['ai_review_button'] = 'Revisar con IA';
 $string['aiproposed'] = 'Respuesta AI propuesta';
 $string['allowedroles'] = 'Roles permitidos para respuestas de IA';
 $string['allowedroles_help'] = 'Selecciona qué roles de usuario pueden recibir respuestas de la IA. Si no se selecciona ninguno, la IA no responderá a ningún usuario.';

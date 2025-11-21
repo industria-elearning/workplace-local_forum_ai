@@ -31,6 +31,7 @@ $string['ai_response'] = 'Respon AI';
 $string['ai_response_approved'] = 'Respon AI Disetujui';
 $string['ai_response_proposed'] = 'Respon AI yang Diajukan';
 $string['ai_response_rejected'] = 'Respon AI Ditolak';
+$string['ai_review_button'] = 'Tinjau dengan AI';
 $string['aiproposed'] = 'Respon AI yang Diajukan';
 $string['allowedroles'] = 'Peran yang diizinkan untuk respons AI';
 $string['allowedroles_help'] = 'Pilih peran pengguna yang dapat menerima respons dari AI. Jika tidak ada yang dipilih, AI tidak akan merespons pengguna mana pun.';
