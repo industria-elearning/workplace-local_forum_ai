@@ -55,7 +55,6 @@ class button_ai_review {
             return;
         }
 
-        // Load the AMD JavaScript module.
         $PAGE->requires->js_call_amd('local_forum_ai/analyze', 'init');
 
         // Hidden by default, will be displayed when the grader is opened.
