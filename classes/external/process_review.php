@@ -24,7 +24,7 @@ use external_api;
 use external_function_parameters;
 use external_value;
 use external_single_structure;
-use local_forum_ai\observer\ai_service;
+use local_forum_ai\ai_service;
 use local_forum_ai\utils;
 
 /**

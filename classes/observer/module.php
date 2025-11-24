@@ -55,11 +55,19 @@ class module {
 
             $maxattempts = 5;
             $discussion = null;
+
             for ($i = 0; $i < $maxattempts; $i++) {
-                $discussion = $DB->get_record('forum_discussions', ['forum' => $forum->id], '*', IGNORE_MULTIPLE);
+                $discussion = $DB->get_record(
+                    'forum_discussions',
+                    ['forum' => $forum->id],
+                    '*',
+                    IGNORE_MULTIPLE
+                );
+
                 if ($discussion) {
                     break;
                 }
+
                 sleep(1);
             }
 
@@ -68,28 +76,17 @@ class module {
             }
 
             $singleevent = \mod_forum\event\discussion_created::create([
-                'objectid' => $discussion->id,
-                'context' => $event->get_context(),
-                'courseid' => $event->courseid,
-                'relateduserid' => $discussion->userid,
-                'other' => ['forumid' => $forumid],
+            'objectid' => $discussion->id,
+            'context' => $event->get_context(),
+            'courseid' => $event->courseid,
+            'relateduserid' => $discussion->userid,
+            'other' => ['forumid' => $forumid],
             ]);
 
-            try {
-                discussion::discussion_created($singleevent);
-            } catch (\Throwable $e) {
-                debugging('AI error during forum creation: ' . $e->getMessage(), DEBUG_DEVELOPER);
-
-                \core\notification::add(
-                    get_string('error_airequest', 'local_forum_ai', $e->getMessage()),
-                    \core\output\notification::NOTIFY_ERROR
-                );
-
-                return true;
-            }
+            discussion::discussion_created($singleevent);
 
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             debugging('General error in course module created: ' . $e->getMessage(), DEBUG_DEVELOPER);
 
             \core\notification::add(
@@ -100,6 +97,7 @@ class module {
             return true;
         }
     }
+
 
     /**
      * Triggered when a course module is deleted.

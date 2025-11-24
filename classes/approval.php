@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_forum_ai\observer;
+namespace local_forum_ai;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(__DIR__ . '/../../locallib.php');
+require_once(__DIR__ . '/../locallib.php');
 
 /**
  * Class for approval request and notification handling.
@@ -119,9 +119,16 @@ class approval {
                 return false;
             }
 
-            $reviewurl = new \moodle_url('/local/forum_ai/review.php', ['token' => $approvaltoken]);
+            $reviewurl  = new \moodle_url('/local/forum_ai/review.php', ['token' => $approvaltoken]);
             $approveurl = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'approve']);
-            $rejecturl = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'reject']);
+            $rejecturl  = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'reject']);
+
+            $renderer = null;
+            try {
+                $renderer = $PAGE->get_renderer('local_forum_ai');
+            } catch (\Throwable $e) {
+                $renderer = null;
+            }
 
             foreach ($finalrecipients as $recipient) {
                 $message = new \core\message\message();
@@ -131,17 +138,19 @@ class approval {
                 $message->userto = $recipient;
                 $message->subject = get_string('notification_subject', 'local_forum_ai');
 
+                $preview = format_string(substr(strip_tags($pending->message), 0, 150));
+
                 $templatedata = [
-                    'str_greeting' => get_string('notification_greeting', 'local_forum_ai', ['firstname' => $recipient->firstname]),
-                    'discussionname' => $discussion->name,
-                    'forumname' => $forum->name,
-                    'preview' => format_string(substr(strip_tags($pending->message), 0, 150)),
-                    'reviewurl' => $reviewurl->out(false),
-                    'coursefullname' => $course->fullname,
-                    'str_subject' => get_string('notification_subject', 'local_forum_ai'),
-                    'str_preview_label' => get_string('notification_preview', 'local_forum_ai'),
-                    'str_review_button' => get_string('notification_review_button', 'local_forum_ai'),
-                    'str_course_label' => get_string('notification_course_label', 'local_forum_ai'),
+                'str_greeting' => get_string('notification_greeting', 'local_forum_ai', ['firstname' => $recipient->firstname]),
+                'discussionname' => $discussion->name,
+                'forumname' => $forum->name,
+                'preview' => $preview,
+                'reviewurl' => $reviewurl->out(false),
+                'coursefullname' => $course->fullname,
+                'str_subject' => get_string('notification_subject', 'local_forum_ai'),
+                'str_preview_label' => get_string('notification_preview', 'local_forum_ai'),
+                'str_review_button' => get_string('notification_review_button', 'local_forum_ai'),
+                'str_course_label' => get_string('notification_course_label', 'local_forum_ai'),
                 ];
 
                 $message->fullmessage = self::get_plain_text_message(
@@ -149,7 +158,7 @@ class approval {
                     $discussion->name,
                     $forum->name,
                     $course->fullname,
-                    $templatedata['preview'],
+                    $preview,
                     $reviewurl->out(false),
                     $approveurl->out(false),
                     $rejecturl->out(false)
@@ -157,10 +166,12 @@ class approval {
 
                 $message->fullmessageformat = FORMAT_PLAIN;
 
-                try {
-                    $renderer = $PAGE->get_renderer('local_forum_ai');
-                    $message->fullmessagehtml = $renderer->render_from_template('local_forum_ai/notification', $templatedata);
-                } catch (\Exception $templateerror) {
+                if ($renderer) {
+                    $message->fullmessagehtml = $renderer->render_from_template(
+                        'local_forum_ai/notification',
+                        $templatedata
+                    );
+                } else {
                     $message->fullmessagehtml = $message->fullmessage;
                 }
 
@@ -169,6 +180,7 @@ class approval {
                     'local_forum_ai',
                     ['discussion' => $discussion->name]
                 );
+
                 $message->contexturl = $reviewurl;
                 $message->contexturlname = get_string('notification_review_button', 'local_forum_ai');
 
@@ -176,7 +188,8 @@ class approval {
             }
 
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            debugging('Error sending Moodle notification: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
     }
