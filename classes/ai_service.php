@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_forum_ai\observer;
+namespace local_forum_ai;
 
 use aiprovider_datacurso\httpclient\ai_services_api;
 use local_forum_ai\utils;
