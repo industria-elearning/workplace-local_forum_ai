@@ -58,7 +58,7 @@ class ai_service {
         $payload = utils::normalize_payload($payload);
 
         $client = new ai_services_api();
-        $response = $client->request('POST', '/forum/chat', $payload);
+        $response = $client->request('POST', '/forum/grade', $payload);
 
         if (is_array($response)) {
             return $response;
