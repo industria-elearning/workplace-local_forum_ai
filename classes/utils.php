@@ -119,18 +119,20 @@ class utils {
             ];
         }
 
-        return [
-            [
-                'userid' => $userid,
-                'participation' => (object)[
-                    'forum_id' => $forum->id,
-                    'forum' => $forum->name,
-                    'scale' => $forum->scale,
-                    'rubric' => $rubricdata,
-                    'assessment_guide' => $guidedata,
-                    'discussions' => $discussions,
-                ],
+        $participation = [
+            'userid' => $userid,
+            'participation' => [
+                'forum_id' => (string)$forum->id,
+                'forum' => $forum->name,
+                'scale' => (string)$forum->scale,
+                'rubric' => $rubricdata,
+                'assessment_guide' => $guidedata,
+                'discussions' => $discussions,
             ],
+        ];
+
+        return [
+            'forum_participations' => array_values([$participation]),
         ];
     }
 }
