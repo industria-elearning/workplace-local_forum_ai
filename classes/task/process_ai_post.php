@@ -83,7 +83,7 @@ class process_ai_post extends adhoc_task {
                 'discussion' => $discussion->name,
                 'discussion_id' => $discussion->id,
                 'postid' => $post->id,
-                'post_message' => $postmessage,
+                'post' => $postmessage,
                 'userid' => $graderid ?? 2,
                 'prompt' => $replymessage,
                 'grading_enabled' => $gradingenabled,
