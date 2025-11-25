@@ -70,12 +70,20 @@ class process_ai_post extends adhoc_task {
 
             $gradingenabled = ($forum->assessed != 0);
 
+            $postmessage = format_text($post->message, $post->format, [
+            'context' => \context_module::instance($data->cmid),
+            ]);
+
+            $postmessage = strip_tags($postmessage);
+            $postmessage = trim($postmessage);
+
             $payload = [
                 'course' => $course->fullname,
                 'forum' => $forum->name,
                 'discussion' => $discussion->name,
                 'discussion_id' => $discussion->id,
                 'postid' => $post->id,
+                'post_message' => $postmessage,
                 'userid' => $graderid ?? 2,
                 'prompt' => $replymessage,
                 'grading_enabled' => $gradingenabled,

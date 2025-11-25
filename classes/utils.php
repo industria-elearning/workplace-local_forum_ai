@@ -122,7 +122,7 @@ class utils {
         return [
             [
                 'userid' => $userid,
-                'participation' => [
+                'participation' => (object)[
                     'forum_id' => $forum->id,
                     'forum' => $forum->name,
                     'scale' => $forum->scale,
