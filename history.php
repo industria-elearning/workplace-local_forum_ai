@@ -37,7 +37,6 @@ if ($forumid) {
 
     require_login($course, true, $cm);
     $context = context_module::instance($cm->id);
-
 } else {
     $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 
