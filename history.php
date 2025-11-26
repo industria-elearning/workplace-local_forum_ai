@@ -26,15 +26,24 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
-$forumid = required_param('forumid', PARAM_INT);
-$courseid = optional_param('courseid', 0, PARAM_INT);
 
-$forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
-$course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
-$cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+$courseid = required_param('courseid', PARAM_INT);
+$forumid  = optional_param('forumid', 0, PARAM_INT);
 
-require_login($course, true, $cm);
-$context = context_module::instance($cm->id);
+if ($forumid) {
+    $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+    require_login($course, true, $cm);
+    $context = context_module::instance($cm->id);
+} else {
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+
+    require_login($course);
+    $context = context_course::instance($course->id);
+}
+
 require_capability('local/forum_ai:approveresponses', $context);
 
 $PAGE->set_url('/local/forum_ai/history.php', ['forumid' => $forumid]);
