@@ -64,6 +64,7 @@ $string['error_saving'] = 'Ошибка при сохранении конфиг
 $string['evaluatingwithai'] = 'Оценка с помощью ИИ...';
 $string['forum'] = 'Форум';
 $string['forum_ai:approveresponses'] = 'Одобрить или отклонить ответы форума, сгенерированные ИИ';
+$string['forum_ai:useaireview'] = 'Используйте функцию проверки ИИ для оценки форума';
 $string['forumname'] = 'Форум';
 $string['goto_notifications'] = 'Перейти к уведомлениям';
 $string['grade'] = 'Оценка';

@@ -64,6 +64,7 @@ $string['error_saving'] = 'Fehler beim Speichern der Konfiguration: {$a}';
 $string['evaluatingwithai'] = 'Auswertung mit KI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'KI-generierte Forenantworten genehmigen oder ablehnen';
+$string['forum_ai:useaireview'] = 'Verwenden Sie die KI-Überprüfungsfunktion, um das Forum zu bewerten';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Zu Benachrichtigungen gehen';
 $string['grade'] = 'Bewertung';

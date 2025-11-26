@@ -18,6 +18,7 @@ namespace local_forum_ai\hook;
 
 use core\hook\output\before_footer_html_generation;
 use html_writer;
+use context_course;
 
 /**
  * Hook class responsible for injecting the AI review button into forum pages.
@@ -52,6 +53,12 @@ class button_ai_review {
 
         // Only execute on forum pages.
         if ($PAGE->url->get_path() !== '/mod/forum/view.php') {
+            return;
+        }
+
+        $coursecontext = context_course::instance($PAGE->course->id);
+
+        if (!has_capability('local/forum_ai:useaireview', $coursecontext)) {
             return;
         }
 

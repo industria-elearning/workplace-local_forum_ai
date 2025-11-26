@@ -64,6 +64,7 @@ $string['error_saving'] = 'Kesalahan menyimpan konfigurasi: {$a}';
 $string['evaluatingwithai'] = 'Sedang mengevaluasi dengan AI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Setujui atau tolak respons forum yang dihasilkan oleh AI';
+$string['forum_ai:useaireview'] = 'Gunakan fitur peninjauan AI untuk menilai forum';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Buka Notifikasi';
 $string['grade'] = 'Nilai';

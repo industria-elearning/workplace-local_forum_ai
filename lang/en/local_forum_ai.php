@@ -65,6 +65,7 @@ $string['error_saving'] = 'Error saving configuration: {$a}';
 $string['evaluatingwithai'] = 'Evaluating with AI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Approve or reject AI-generated forum responses';
+$string['forum_ai:useaireview'] = 'Use AI review functionality for forum grading';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Go to Notifications';
 $string['grade'] = 'Grade';

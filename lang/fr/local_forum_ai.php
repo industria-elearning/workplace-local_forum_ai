@@ -64,6 +64,7 @@ $string['error_saving'] = 'Erreur lors de l’enregistrement de la configuration
 $string['evaluatingwithai'] = 'Évaluation avec l’IA...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Approuver ou rejeter les réponses générées par l’IA dans le forum';
+$string['forum_ai:useaireview'] = 'Utilisez la fonction de révision par IA pour évaluer le forum';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Aller aux notifications';
 $string['grade'] = 'Note';
