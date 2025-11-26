@@ -26,16 +26,23 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
-$forumid = required_param('forumid', PARAM_INT);
-$courseid = optional_param('courseid', 0, PARAM_INT);
+$courseid = required_param('courseid', PARAM_INT);
+$forumid  = optional_param('forumid', 0, PARAM_INT);
 
-// Resolve forum, course and CM to integrate with forum navigation like a normal page.
-$forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
-$course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
-$cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+if ($forumid) {
+    $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-require_login($course, true, $cm);
-$context = context_module::instance($cm->id);
+    require_login($course, true, $cm);
+    $context = context_module::instance($cm->id);
+} else {
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+
+    require_login($course);
+    $context = context_course::instance($course->id);
+}
+
 require_capability('local/forum_ai:approveresponses', $context);
 
 $PAGE->set_url('/local/forum_ai/pending.php', ['forumid' => $forumid]);
@@ -63,6 +70,7 @@ $templatecontext = [
     'col_message' => get_string('col_message', 'local_forum_ai'),
     'col_user' => get_string('username', 'local_forum_ai'),
     'col_preview' => get_string('preview', 'local_forum_ai'),
+    'col_grade' => get_string('grade', 'local_forum_ai'),
     'col_actions' => get_string('actions', 'local_forum_ai'),
     'approve' => get_string('approve', 'local_forum_ai'),
     'reject' => get_string('reject', 'local_forum_ai'),
@@ -84,6 +92,7 @@ foreach ($pendings as $p) {
         'discussionmsg'   => format_text($p->discussionmessage, $p->messageformat),
         'userfullname' => fullname($user),
         'preview' => shorten_text(strip_tags($p->message), 100),
+        'grade' => (isset($p->grade) && $p->grade !== '' ? format_string($p->grade) : '-'),
         'viewdetails'    => get_string('viewdetails', 'local_forum_ai'),
         'token' => $p->approval_token,
     ];
