@@ -26,15 +26,25 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
-$forumid = required_param('forumid', PARAM_INT);
-$courseid = optional_param('courseid', 0, PARAM_INT);
 
-$forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
-$course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
-$cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+$courseid = required_param('courseid', PARAM_INT);
+$forumid  = optional_param('forumid', 0, PARAM_INT);
 
-require_login($course, true, $cm);
-$context = context_module::instance($cm->id);
+if ($forumid) {
+    $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+    require_login($course, true, $cm);
+    $context = context_module::instance($cm->id);
+
+} else {
+    $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+
+    require_login($course);
+    $context = context_course::instance($course->id);
+}
+
 require_capability('local/forum_ai:approveresponses', $context);
 
 $PAGE->set_url('/local/forum_ai/history.php', ['forumid' => $forumid]);
@@ -63,6 +73,7 @@ $templatecontext = [
     'col_forum' => get_string('forumname', 'local_forum_ai'),
     'col_discussion' => get_string('discussionname', 'local_forum_ai'),
     'col_message' => get_string('discussionmsg', 'local_forum_ai'),
+    'col_grade' => get_string('grade', 'local_forum_ai'),
     'col_user' => get_string('username', 'local_forum_ai'),
     'col_status' => get_string('status', 'local_forum_ai'),
     'col_actions' => get_string('actions', 'local_forum_ai'),
@@ -81,6 +92,7 @@ foreach ($records as $r) {
         'forumname' => format_string($r->forumname),
         'discussionname' => format_string($r->discussionname),
         'discussionmsg' => shorten_text(strip_tags($r->message), 100),
+        'grade' => (isset($r->grade) && $r->grade !== '' ? format_string($r->grade) : '-'),
         'userfullname' => fullname($user),
         'status' => $statusmap[$r->status] ?? $r->status,
         'viewdetails' => get_string('viewdetails', 'local_forum_ai'),
