@@ -207,34 +207,65 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
      * @param {Array} rubricData
      */
     function applyRubricGrade(rubricData) {
-
         rubricData.forEach(function (crit) {
+            const allCriterionTitles = document.querySelectorAll('h5[id^="criterion-description-"]');
 
-            document.querySelectorAll('.criterion').forEach(container => {
+            allCriterionTitles.forEach(h5 => {
 
-                const title = container.querySelector('h5');
+                if (h5.textContent.trim() !== crit.criterion) {
+                    return;
+                }
 
-                if (!title || title.textContent.trim() !== crit.criterion) {
+                const mainContainer = h5.closest('.mb-3');
+                if (!mainContainer) {
                     return;
                 }
 
                 const selectedLevel = crit.levels[0];
 
-                container.querySelectorAll('label').forEach(label => {
-                    if (label.textContent.includes(selectedLevel.description)) {
-                        const input = label.previousElementSibling;
-                        if (input && input.type === 'radio') {
-                            input.checked = true;
-                        }
+                const collapseDiv = mainContainer.querySelector('.collapse[role="radiogroup"]');
+                if (!collapseDiv) {
+                    return;
+                }
+
+                const formChecks = collapseDiv.querySelectorAll('.form-check');
+
+                formChecks.forEach(formCheck => {
+                    const label = formCheck.querySelector('label');
+                    const input = formCheck.querySelector('input.level[type="radio"]');
+
+                    if (!label || !input) {
+                        return;
+                    }
+
+                    const descriptionSpan = label.querySelector('span:first-child');
+                    if (!descriptionSpan) {
+                        return;
+                    }
+
+                    const descriptionText = descriptionSpan.textContent.trim();
+
+                    if (descriptionText === selectedLevel.description) {
+                        input.checked = true;
+                        input.setAttribute('aria-checked', 'true');
+                        input.setAttribute('tabindex', '0');
+
+                        input.setAttribute('data-initial-value', 'true');
+
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
 
-                const textarea = container.querySelector('textarea');
+                const textarea = mainContainer.querySelector('textarea[id^="advancedgrading-criteria-"][id$="-remark"]');
                 if (textarea && crit.reply) {
                     textarea.value = crit.reply;
+                    textarea.setAttribute('data-initial-value', JSON.stringify(crit.reply));
+
+                    if (textarea.hasAttribute('data-auto-rows')) {
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
                 }
             });
-
         });
     }
 
