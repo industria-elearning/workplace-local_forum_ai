@@ -17,41 +17,35 @@
 namespace local_forum_ai\hook;
 
 use core\hook\output\before_footer_html_generation;
-use html_writer;
 use context_course;
 
 /**
- * Hook class responsible for injecting the AI review button into forum pages.
+ * Hook responsible for injecting the AI review button into forum pages.
  *
- * This hook listens to the before_footer_html_generation event and conditionally
- * adds a hidden button that triggers the AI review functionality when the forum
- * grading interface is opened.
+ * The button is rendered using a Mustache template to ensure separation
+ * of concerns and full compatibility with Moodle theming system.
  *
- * The button is only added on forum view pages and is initialized via an AMD
- * JavaScript module.
+ * The button is only added:
+ *  - On forum view pages.
+ *  - For users with the required capability.
  *
  * @package     local_forum_ai
  * @copyright   2025 Datacurso
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class button_ai_review {
+
     /**
-     * Callback executed before the footer HTML is generated.
+     * Executed before the footer HTML is generated.
      *
-     * This method verifies that the current page corresponds to the forum
-     * view and, if so, loads the required AMD JavaScript module and injects
-     * a hidden AI review button into the page output.
+     * Injects the AI review button and loads the required JavaScript module.
      *
-     * The button will be displayed dynamically when the grader interface
-     * becomes available.
-     *
-     * @param before_footer_html_generation $hook The hook event instance.
+     * @param before_footer_html_generation $hook Hook event instance.
      * @return void
      */
     public static function before_footer_html_generation(before_footer_html_generation $hook): void {
         global $PAGE;
 
-        // Only execute on forum pages.
         if ($PAGE->url->get_path() !== '/mod/forum/view.php') {
             return;
         }
@@ -64,13 +58,13 @@ class button_ai_review {
 
         $PAGE->requires->js_call_amd('local_forum_ai/analyze', 'init');
 
-        // Hidden by default, will be displayed when the grader is opened.
-        $button = html_writer::tag('button', get_string('ai_review_button', 'local_forum_ai'), [
-            'id' => 'forum-ai-review-btn',
-            'class' => 'btn btn-primary',
-            'style' => 'display: none; margin-bottom: 1rem;',
-        ]);
+        $renderer = $PAGE->get_renderer('local_forum_ai');
 
-        $hook->add_html($button);
+        $buttonhtml = $renderer->render_from_template(
+            'local_forum_ai/ai_review_button',
+            []
+        );
+
+        $hook->add_html($buttonhtml);
     }
 }
