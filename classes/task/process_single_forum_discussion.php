@@ -16,8 +16,6 @@
 
 namespace local_forum_ai\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Adhoc task to process single forum discussions asynchronously.
  *

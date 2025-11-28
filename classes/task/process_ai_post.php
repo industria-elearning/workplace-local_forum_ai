@@ -21,24 +21,36 @@ use local_forum_ai\ai_service;
 use local_forum_ai\approval;
 use local_forum_ai\role_checker;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../locallib.php');
+
 /**
  * Ad-hoc task to process AI responses and grading for forum posts.
  *
- * @package local_forum_ai
- * @copyright 2025 Datacurso
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * This task is queued when a new post is created in a forum with AI enabled.
+ * It generates an AI response and optionally applies a rating based on the
+ * forum configuration.
+ *
+ * @package    local_forum_ai
+ * @copyright  2025 Datacurso
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class process_ai_post extends adhoc_task {
     /**
      * Executes the queued ad-hoc task.
      *
+     * Retrieves the post data, calls the AI service to generate a response
+     * and grade (if applicable), and either posts the response immediately
+     * or creates a pending approval request.
+     *
      * @return void
+     * @throws \dml_exception
      */
     public function execute() {
-        global $DB, $USER, $CFG;
+        global $DB, $CFG;
 
-        require_once($CFG->dirroot . '/rating/lib.php');
-
+        // Get custom data passed to the task.
         $data = $this->get_custom_data();
         $postid = $data->postid;
 
@@ -48,7 +60,7 @@ class process_ai_post extends adhoc_task {
             $forum = $DB->get_record('forum', ['id' => $discussion->forum], '*', MUST_EXIST);
             $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
 
-            // Skip first post.
+            // Skip processing if this is the first post of a discussion.
             if ($post->id == $discussion->firstpost) {
                 return;
             }
@@ -71,9 +83,8 @@ class process_ai_post extends adhoc_task {
             $gradingenabled = ($forum->assessed != 0);
 
             $postmessage = format_text($post->message, $post->format, [
-            'context' => \context_module::instance($data->cmid),
+                'context' => \context_module::instance($data->cmid),
             ]);
-
             $postmessage = strip_tags($postmessage);
             $postmessage = trim($postmessage);
 
@@ -101,12 +112,9 @@ class process_ai_post extends adhoc_task {
                 $context = \context_module::instance($data->cmid);
                 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-                $originaluser = $USER;
-                $USER = \core_user::get_user($graderid, '*', MUST_EXIST);
-
                 try {
-                    $rm = new \rating_manager();
-                    $result = $rm->add_rating(
+                    // Use custom function to add rating without modifying global $USER.
+                    $result = local_forum_ai_add_rating(
                         $cm,
                         $context,
                         'mod_forum',
@@ -115,14 +123,15 @@ class process_ai_post extends adhoc_task {
                         $forum->scale,
                         $grade,
                         $post->userid,
-                        $forum->assessed
+                        $forum->assessed,
+                        $graderid
                     );
 
                     if (!empty($result->error)) {
                         debugging('Error adding AI rating: ' . $result->error, DEBUG_DEVELOPER);
                     }
-                } finally {
-                    $USER = $originaluser;
+                } catch (\Exception $e) {
+                    debugging('Exception adding AI rating: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 }
             } else if (!$requireapproval && $gradingenabled && $grade !== null && !$graderid) {
                 debugging('Grading enabled but no grader configured for forum ' . $forum->id, DEBUG_DEVELOPER);

@@ -34,7 +34,6 @@ use context_course;
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class button_ai_review {
-
     /**
      * Executed before the footer HTML is generated.
      *

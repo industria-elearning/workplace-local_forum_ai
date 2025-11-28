@@ -52,8 +52,6 @@ $PAGE->set_title(get_string('historyresponses', 'local_forum_ai'));
 $PAGE->set_heading($course->fullname);
 $PAGE->requires->css('/local/forum_ai/styles/review.css');
 
-local_forum_ai_cleanup_pending();
-
 $courseid = $course->id;
 $records = local_forum_ai_get_history($courseid, $forumid);
 

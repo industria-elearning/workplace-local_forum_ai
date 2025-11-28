@@ -20,7 +20,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/externallib.php');
 require_once(__DIR__ . '/../../locallib.php');
-require_once($CFG->dirroot . '/rating/lib.php');
 
 use external_api;
 use external_function_parameters;
@@ -31,8 +30,8 @@ use moodle_exception;
 /**
  * External service to approve or reject AI-generated responses in forums.
  *
- * Define the webservice function `local_forum_ai_approve response`
- * which allows you to approve or reject pending responses.
+ * Defines the webservice function `local_forum_ai_approve_response`
+ * which allows approving or rejecting pending AI responses.
  *
  * @package    local_forum_ai
  * @category   external
@@ -43,7 +42,7 @@ class approve_response extends external_api {
     /**
      * Define the input parameters of the external function.
      *
-     * @return external_function_parameters parameter structure
+     * @return external_function_parameters Parameter structure
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -57,11 +56,11 @@ class approve_response extends external_api {
      *
      * @param string $token  Approval token associated with the pending response
      * @param string $action Action to perform: approve or reject
-     * @return array result with 'success' key in case of success
-     * @throws moodle_exception if the validations or permissions are not met
+     * @return array Result with 'success' key in case of success
+     * @throws moodle_exception If the validations or permissions are not met
      */
     public static function execute($token, $action) {
-        global $DB, $CFG, $USER;
+        global $DB, $CFG;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'token'  => $token,
@@ -82,7 +81,6 @@ class approve_response extends external_api {
 
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
-
         require_capability('mod/forum:viewdiscussion', $context);
 
         if ($params['action'] === 'approve') {
@@ -94,10 +92,7 @@ class approve_response extends external_api {
                 throw new moodle_exception('noteachersfound', 'local_forum_ai');
             }
 
-            $realuser = $USER;
-            $USER = \core_user::get_user($teacher->id);
-
-            // Determine the correct parent based on parentpostid.
+            // Determine the correct parent post based on parentpostid.
             $parentid = $discussion->firstpost;
 
             if (!empty($pending->parentpostid)) {
@@ -146,13 +141,8 @@ class approve_response extends external_api {
                         $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
 
                         if ($originalpost) {
-                            // Temporarily switch to configured grader user.
-                            $graderuser = \core_user::get_user($graderid, '*', MUST_EXIST);
-                            $USER = $graderuser;
-
-                            $rm = new \rating_manager();
-
-                            $result = $rm->add_rating(
+                            // Use custom function to add rating without modifying global $USER.
+                            $result = local_forum_ai_add_rating(
                                 $cm,
                                 $context,
                                 'mod_forum',
@@ -161,7 +151,8 @@ class approve_response extends external_api {
                                 $forum->scale,
                                 $pending->grade,
                                 $originalpost->userid,
-                                $forum->assessed
+                                $forum->assessed,
+                                $graderid
                             );
 
                             if (!empty($result->error)) {
@@ -171,13 +162,7 @@ class approve_response extends external_api {
                     }
                 } catch (\Exception $e) {
                     debugging('Exception adding rating on manual approval: ' . $e->getMessage(), DEBUG_DEVELOPER);
-                } finally {
-                    // Always restore the original user.
-                    $USER = $realuser;
                 }
-            } else {
-                // Restore user even if rating not applied.
-                $USER = $realuser;
             }
 
             $pending->status       = 'approved';
@@ -198,7 +183,7 @@ class approve_response extends external_api {
     /**
      * Define the output structure of the external function.
      *
-     * @return external_single_structure return structure
+     * @return external_single_structure Return structure
      */
     public static function execute_returns() {
         return new external_single_structure([
