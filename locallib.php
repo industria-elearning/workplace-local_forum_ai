@@ -22,27 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * Cleans invalid records in the pending table.
- *
- * @package local_forum_ai
- * @return void
- */
-function local_forum_ai_cleanup_pending() {
-    global $DB;
+defined('MOODLE_INTERNAL') || die();
 
-    // Deletes records with non-existent forums.
-    $DB->delete_records_select(
-        'local_forum_ai_pending',
-        'forumid NOT IN (SELECT id FROM {forum})'
-    );
-
-    // Deletes records with non-existent discussions.
-    $DB->delete_records_select(
-        'local_forum_ai_pending',
-        'discussionid NOT IN (SELECT id FROM {forum_discussions})'
-    );
-}
+require_once($CFG->dirroot . '/rating/lib.php');
 
 /**
  * Gets the list of pending responses.
@@ -192,4 +174,137 @@ function local_forum_ai_cleanup_expired(): int {
     }
 
     return 0;
+}
+
+/**
+ * Adds a rating on behalf of a specific user (for AI forum plugin).
+ *
+ * This is a custom version of rating_manager::add_rating() that accepts
+ * a specific user ID instead of using the global $USER variable.
+ *
+ * @param stdClass $cm course module object
+ * @param stdClass $context context object
+ * @param string $component component name
+ * @param string $ratingarea rating area
+ * @param int $itemid the item id
+ * @param int $scaleid the scale id
+ * @param int $userrating the rating value
+ * @param int $rateduserid the rated user id
+ * @param int $aggregationmethod the aggregation method
+ * @param int $rateruserid the user ID who is giving the rating
+ * @return stdClass result object with success/error properties
+ */
+function local_forum_ai_add_rating(
+    $cm,
+    $context,
+    $component,
+    $ratingarea,
+    $itemid,
+    $scaleid,
+    $userrating,
+    $rateduserid,
+    $aggregationmethod,
+    $rateruserid
+) {
+    global $CFG, $DB;
+
+    $result = new stdClass();
+    $rm = new rating_manager();
+
+    // Check the module rating permissions for the rater user.
+    $pluginpermissionsarray = $rm->get_plugin_permissions_array($context->id, $component, $ratingarea);
+
+    if (!$pluginpermissionsarray['rate']) {
+        $result->error = 'ratepermissiondenied';
+        return $result;
+    }
+
+    // Validate the rating.
+    $params = [
+        'context'     => $context,
+        'component'   => $component,
+        'ratingarea'  => $ratingarea,
+        'itemid'      => $itemid,
+        'scaleid'     => $scaleid,
+        'rating'      => $userrating,
+        'rateduserid' => $rateduserid,
+        'aggregation' => $aggregationmethod,
+    ];
+
+    if (!$rm->check_rating_is_valid($params)) {
+        $result->error = 'ratinginvalid';
+        return $result;
+    }
+
+    // Rating options used to update the rating.
+    $ratingoptions = new stdClass();
+    $ratingoptions->context = $context;
+    $ratingoptions->ratingarea = $ratingarea;
+    $ratingoptions->component = $component;
+    $ratingoptions->itemid  = $itemid;
+    $ratingoptions->scaleid = $scaleid;
+    $ratingoptions->userid  = $rateruserid;
+
+    if ($userrating != RATING_UNSET_RATING) {
+        $rating = new rating($ratingoptions);
+        $rating->update_rating($userrating);
+    } else {
+        // Delete the rating if unset.
+        $options = new stdClass();
+        $options->contextid = $context->id;
+        $options->component = $component;
+        $options->ratingarea = $ratingarea;
+        $options->userid = $rateruserid;
+        $options->itemid = $itemid;
+
+        $rm->delete_ratings($options);
+    }
+
+    // Update grades if in module context.
+    if ($context->contextlevel == CONTEXT_MODULE) {
+        $modinstance = $DB->get_record($cm->modname, ['id' => $cm->instance]);
+        if ($modinstance) {
+            $modinstance->cmidnumber = $cm->id;
+            $functionname = $cm->modname . '_update_grades';
+            require_once($CFG->dirroot . "/mod/{$cm->modname}/lib.php");
+            if (function_exists($functionname)) {
+                $functionname($modinstance, $rateduserid);
+            }
+        }
+    }
+
+    $result->success = true;
+
+    // Retrieve the updated aggregate.
+    $item = new stdClass();
+    $item->id = $itemid;
+
+    $ratingoptions->items = [$item];
+    $ratingoptions->aggregate = $aggregationmethod;
+
+    $items = $rm->get_ratings($ratingoptions);
+    $firstrating = $items[0]->rating;
+
+    if ($firstrating->user_can_view_aggregate()) {
+        $scalearray = null;
+        $aggregatetoreturn = round($firstrating->aggregate, 1);
+
+        if ($firstrating->settings->aggregationmethod == RATING_AGGREGATE_COUNT || $firstrating->count == 0) {
+            $aggregatetoreturn = ' - ';
+        } else if ($firstrating->settings->scale->id < 0) {
+            if ($firstrating->settings->aggregationmethod != RATING_AGGREGATE_SUM) {
+                $scalerecord = $DB->get_record('scale', ['id' => -$firstrating->settings->scale->id]);
+                if ($scalerecord) {
+                    $scalearray = explode(',', $scalerecord->scale);
+                    $aggregatetoreturn = $scalearray[$aggregatetoreturn - 1];
+                }
+            }
+        }
+
+        $result->aggregate = $aggregatetoreturn;
+        $result->count = $firstrating->count;
+        $result->itemid = $itemid;
+    }
+
+    return $result;
 }

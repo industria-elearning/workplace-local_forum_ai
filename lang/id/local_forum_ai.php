@@ -31,11 +31,14 @@ $string['ai_response'] = 'Respon AI';
 $string['ai_response_approved'] = 'Respon AI Disetujui';
 $string['ai_response_proposed'] = 'Respon AI yang Diajukan';
 $string['ai_response_rejected'] = 'Respon AI Ditolak';
+$string['ai_review_button'] = 'Tinjau dengan AI';
 $string['aiproposed'] = 'Respon AI yang Diajukan';
 $string['allowedroles'] = 'Peran yang diizinkan untuk respons AI';
 $string['allowedroles_help'] = 'Pilih peran pengguna yang dapat menerima respons dari AI. Jika tidak ada yang dipilih, AI tidak akan merespons pengguna mana pun.';
 $string['alreadysubmitted'] = 'Permintaan ini sudah disetujui, ditolak, atau tidak ada.';
 $string['approve'] = 'Setujui';
+$string['autogradegrader'] = 'Pengguna penilai untuk persetujuan otomatis';
+$string['autogradegrader_help'] = 'Pilih pengguna yang akan terdaftar sebagai penilai ketika umpan balik AI disetujui secara otomatis. Hanya pengguna dengan izin untuk menilai di kursus ini yang ditampilkan.';
 $string['backtodiscussion'] = 'Kembali ke diskusi';
 $string['backup:includeai'] = 'Sertakan data forum AI dalam cadangan';
 $string['cancel'] = 'Batal';
@@ -58,10 +61,13 @@ $string['enablediainitconversation_help'] = 'Mengaktifkan opsi ini akan memungki
 $string['err_table_missing'] = 'Tabel konfigurasi untuk Forum AI tidak ada. Silakan perbarui plugin dari Administrasi Situs > Notifikasi.';
 $string['error_airequest'] = 'Kesalahan komunikasi dengan layanan AI: {$a}';
 $string['error_saving'] = 'Kesalahan menyimpan konfigurasi: {$a}';
+$string['evaluatingwithai'] = 'Sedang mengevaluasi dengan AI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Setujui atau tolak respons forum yang dihasilkan oleh AI';
+$string['forum_ai:useaireview'] = 'Gunakan fitur peninjauan AI untuk menilai forum';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Buka Notifikasi';
+$string['grade'] = 'Nilai';
 $string['historyresponses'] = 'Riwayat Respon Forum AI';
 $string['invalidaction'] = 'Tindakan yang ditentukan tidak valid.';
 $string['invalidrole'] = 'Satu atau lebih peran yang dipilih tidak valid.';
@@ -75,14 +81,23 @@ $string['nohistory'] = 'Tidak ada riwayat respon AI yang disetujui atau ditolak.
 $string['nopermission'] = 'Anda tidak memiliki izin untuk menyetujui atau menolak respon AI.';
 $string['noresponses'] = 'Tidak ada respon yang menunggu persetujuan.';
 $string['noteachersfound'] = 'Tidak ada pengajar ditemukan untuk kursus ini.';
-$string['notification_approve_link'] = 'Setujui langsung: {$a->url}';
 $string['notification_course_label'] = 'Kursus';
+$string['notification_fullmessage'] = 'Halo {$a->firstname},
+
+Jawaban yang dihasilkan AI telah dibuat untuk diskusi "{$a->discussion}" di forum "{$a->forum}" (Kursus: {$a->course}).
+
+Pratinjau: {$a->preview}...
+
+Untuk meninjau pesan lengkap dan memutuskan apakah akan menyetujuinya atau menolaknya, silakan kunjungi:
+{$a->reviewurl}
+
+Tindakan cepat:
+- Setujui: {$a->approveurl}
+- Tolak: {$a->rejecturl}';
 $string['notification_greeting'] = 'Halo {$a->firstname},';
 $string['notification_intro'] = 'Respon otomatis telah dihasilkan untuk diskusi "{$a->discussion}" di forum "{$a->forum}" dalam kursus "{$a->course}".';
 $string['notification_preview'] = 'Pratinjau:';
-$string['notification_reject_link'] = 'Tolak: {$a->url}';
 $string['notification_review_button'] = 'Tinjau Respon';
-$string['notification_review_link'] = 'Tinjau dan setujui respon di: {$a->url}';
 $string['notification_smallmessage'] = 'Respon AI baru menunggu di "{$a->discussion}"';
 $string['notification_subject'] = 'Persetujuan Diperlukan: Respon AI';
 $string['originalmessage'] = 'Pesan asli';
@@ -124,6 +139,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Disetujui';
 $string['statuspending'] = 'Menunggu';
 $string['statusrejected'] = 'Ditolak';
+$string['task_process_single_forum_discussion'] = 'Memproses satu forum diskusi untuk AI';
 $string['username'] = 'Pembuat';
 $string['viewdetails'] = 'Detail';
 $string['yes'] = 'Ya';

@@ -31,11 +31,14 @@ $string['ai_response'] = 'Ответ ИИ';
 $string['ai_response_approved'] = 'Ответ ИИ одобрен';
 $string['ai_response_proposed'] = 'Предложенный ответ ИИ';
 $string['ai_response_rejected'] = 'Ответ ИИ отклонён';
+$string['ai_review_button'] = 'Проверить с ИИ';
 $string['aiproposed'] = 'Предложенный ответ ИИ';
 $string['allowedroles'] = 'Разрешённые роли для ответов ИИ';
 $string['allowedroles_help'] = 'Выберите роли пользователей, которым разрешено получать ответы от ИИ. Если ни одна не выбрана, ИИ не будет отвечать ни одному пользователю.';
 $string['alreadysubmitted'] = 'Этот запрос уже был одобрен, отклонён или не существует.';
 $string['approve'] = 'Одобрить';
+$string['autogradegrader'] = 'Пользователь-оценщик для автоматических подтверждений';
+$string['autogradegrader_help'] = 'Выберите пользователя, который будет зарегистрирован как оценщик, когда отзыв ИИ будет автоматически одобрен. Отображаются только пользователи, имеющие право оценивать в этом курсе.';
 $string['backtodiscussion'] = 'Назад к обсуждению';
 $string['backup:includeai'] = 'Включить данные форума ИИ в резервные копии';
 $string['cancel'] = 'Отмена';
@@ -58,10 +61,13 @@ $string['enablediainitconversation_help'] = 'Если включить эту о
 $string['err_table_missing'] = 'Таблица конфигурации для форума ИИ не существует. Пожалуйста, обновите плагин через Администрирование сайта > Уведомления.';
 $string['error_airequest'] = 'Ошибка при связи со службой ИИ: {$a}';
 $string['error_saving'] = 'Ошибка при сохранении конфигурации: {$a}';
+$string['evaluatingwithai'] = 'Оценка с помощью ИИ...';
 $string['forum'] = 'Форум';
 $string['forum_ai:approveresponses'] = 'Одобрить или отклонить ответы форума, сгенерированные ИИ';
+$string['forum_ai:useaireview'] = 'Используйте функцию проверки ИИ для оценки форума';
 $string['forumname'] = 'Форум';
 $string['goto_notifications'] = 'Перейти к уведомлениям';
+$string['grade'] = 'Оценка';
 $string['historyresponses'] = 'История ответов форума ИИ';
 $string['invalidaction'] = 'Указанное действие недопустимо.';
 $string['invalidrole'] = 'Одна или несколько выбранных ролей недействительны.';
@@ -75,14 +81,23 @@ $string['nohistory'] = 'Нет истории одобренных или отк
 $string['nopermission'] = 'У вас нет прав для одобрения или отклонения ответов ИИ.';
 $string['noresponses'] = 'Нет ожидающих одобрения ответов.';
 $string['noteachersfound'] = 'Для этого курса преподаватели не найдены.';
-$string['notification_approve_link'] = 'Одобрить напрямую: {$a->url}';
 $string['notification_course_label'] = 'Курс';
+$string['notification_fullmessage'] = 'Здравствуйте, {$a->firstname},
+
+Для обсуждения "{$a->discussion}" на форуме "{$a->forum}" (Курс: {$a->course}) был сгенерирован ответ с использованием ИИ.
+
+Предварительный просмотр: {$a->preview}...
+
+Чтобы просмотреть полное сообщение и решить, одобрить его или отклонить, пожалуйста, перейдите по ссылке:
+{$a->reviewurl}
+
+Быстрые действия:
+- Одобрить: {$a->approveurl}
+- Отклонить: {$a->rejecturl}';
 $string['notification_greeting'] = 'Здравствуйте, {$a->firstname},';
 $string['notification_intro'] = 'Автоматический ответ был сгенерирован для обсуждения "{$a->discussion}" на форуме "{$a->forum}" курса "{$a->course}".';
 $string['notification_preview'] = 'Предпросмотр:';
-$string['notification_reject_link'] = 'Отклонить: {$a->url}';
 $string['notification_review_button'] = 'Проверить ответ';
-$string['notification_review_link'] = 'Проверьте и одобрите ответ по ссылке: {$a->url}';
 $string['notification_smallmessage'] = 'Новый ответ ИИ ожидает в "{$a->discussion}"';
 $string['notification_subject'] = 'Требуется одобрение: ответ ИИ';
 $string['originalmessage'] = 'Оригинальное сообщение';
@@ -124,6 +139,7 @@ $string['status'] = 'Статус';
 $string['statusapproved'] = 'Одобрено';
 $string['statuspending'] = 'Ожидает';
 $string['statusrejected'] = 'Отклонено';
+$string['task_process_single_forum_discussion'] = 'Обработать один форум обсуждений для ИИ';
 $string['username'] = 'Автор';
 $string['viewdetails'] = 'Подробнее';
 $string['yes'] = 'Да';

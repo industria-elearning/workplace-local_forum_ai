@@ -47,7 +47,7 @@ class get_details extends external_api {
      */
     public static function execute_parameters() {
         return new external_function_parameters([
-            'token' => new external_value(PARAM_ALPHANUMEXT, 'Token de aprobación'),
+            'token' => new external_value(PARAM_ALPHANUMEXT, 'Approval token'),
         ]);
     }
 

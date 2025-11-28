@@ -31,11 +31,14 @@ $string['ai_response'] = 'Resposta de IA';
 $string['ai_response_approved'] = 'Resposta de IA aprovada';
 $string['ai_response_proposed'] = 'Resposta de IA proposta';
 $string['ai_response_rejected'] = 'Resposta de IA rejeitada';
+$string['ai_review_button'] = 'Revisar com IA';
 $string['aiproposed'] = 'Resposta de IA proposta';
 $string['allowedroles'] = 'Funções permitidas para respostas da IA';
 $string['allowedroles_help'] = 'Selecione quais funções de usuário a IA pode responder. Se nenhuma for selecionada, a IA não responderá a nenhum usuário.';
 $string['alreadysubmitted'] = 'Esta solicitação já foi aprovada, rejeitada ou não existe.';
 $string['approve'] = 'Aprovar';
+$string['autogradegrader'] = 'Usuário avaliador para aprovações automáticas';
+$string['autogradegrader_help'] = 'Selecione o usuário que será registrado como avaliador quando o feedback da IA for aprovado automaticamente. Apenas usuários com permissão para avaliar neste curso são listados.';
 $string['backtodiscussion'] = 'Voltar à discussão';
 $string['backup:includeai'] = 'Incluir dados do fórum de IA nos backups';
 $string['cancel'] = 'Cancelar';
@@ -58,10 +61,13 @@ $string['enablediainitconversation_help'] = 'Ativar esta opção permitirá que 
 $string['err_table_missing'] = 'A tabela de configuração do Fórum de IA não existe. Atualize o plugin em Administração do site > Notificações.';
 $string['error_airequest'] = 'Erro ao comunicar-se com o serviço de IA: {$a}';
 $string['error_saving'] = 'Erro ao salvar a configuração: {$a}';
+$string['evaluatingwithai'] = 'Avaliando com IA...';
 $string['forum'] = 'Fórum';
 $string['forum_ai:approveresponses'] = 'Aprovar ou rejeitar respostas do fórum geradas por IA';
+$string['forum_ai:useaireview'] = 'Utilize a função de revisão por IA para avaliar o fórum';
 $string['forumname'] = 'Fórum';
 $string['goto_notifications'] = 'Ir para Notificações';
+$string['grade'] = 'Classificação';
 $string['historyresponses'] = 'Histórico de respostas do Fórum de IA';
 $string['invalidaction'] = 'A ação especificada é inválida.';
 $string['invalidrole'] = 'Uma ou mais funções selecionadas são inválidas.';
@@ -75,14 +81,23 @@ $string['nohistory'] = 'Nenhum histórico de respostas de IA aprovadas ou rejeit
 $string['nopermission'] = 'Você não tem permissão para aprovar ou rejeitar respostas de IA.';
 $string['noresponses'] = 'Nenhuma resposta pendente de aprovação.';
 $string['noteachersfound'] = 'Nenhum professor encontrado para este curso.';
-$string['notification_approve_link'] = 'Aprovar diretamente: {$a->url}';
 $string['notification_course_label'] = 'Curso';
+$string['notification_fullmessage'] = 'Olá {$a->firstname},
+
+Uma resposta gerada por IA foi criada para a discussão "{$a->discussion}" no fórum "{$a->forum}" (Curso: {$a->course}).
+
+Pré-visualização: {$a->preview}...
+
+Para revisar a mensagem completa e decidir se deve aprová-la ou rejeitá-la, por favor visite:
+{$a->reviewurl}
+
+Ações rápidas:
+- Aprovar: {$a->approveurl}
+- Rejeitar: {$a->rejecturl}';
 $string['notification_greeting'] = 'Olá {$a->firstname},';
 $string['notification_intro'] = 'Uma resposta automática foi gerada para a discussão "{$a->discussion}" no fórum "{$a->forum}" do curso "{$a->course}".';
 $string['notification_preview'] = 'Pré-visualização:';
-$string['notification_reject_link'] = 'Rejeitar: {$a->url}';
 $string['notification_review_button'] = 'Revisar resposta';
-$string['notification_review_link'] = 'Revise e aprove a resposta em: {$a->url}';
 $string['notification_smallmessage'] = 'Nova resposta de IA pendente em "{$a->discussion}"';
 $string['notification_subject'] = 'Aprovação necessária: Resposta de IA';
 $string['originalmessage'] = 'Mensagem original';
@@ -124,6 +139,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Aprovado';
 $string['statuspending'] = 'Pendente';
 $string['statusrejected'] = 'Rejeitado';
+$string['task_process_single_forum_discussion'] = 'Processar um único fórum de discussão para IA';
 $string['username'] = 'Criador';
 $string['viewdetails'] = 'Detalhes';
 $string['yes'] = 'Sim';

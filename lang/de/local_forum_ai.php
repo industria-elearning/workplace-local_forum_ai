@@ -31,11 +31,14 @@ $string['ai_response'] = 'KI-Antwort';
 $string['ai_response_approved'] = 'KI-Antwort genehmigt';
 $string['ai_response_proposed'] = 'Vorgeschlagene KI-Antwort';
 $string['ai_response_rejected'] = 'KI-Antwort abgelehnt';
+$string['ai_review_button'] = 'Mit KI überprüfen';
 $string['aiproposed'] = 'Vorgeschlagene KI-Antwort';
 $string['allowedroles'] = 'Zulässige Rollen für KI-Antworten';
 $string['allowedroles_help'] = 'Wählen Sie aus, auf welche Benutzerrollen die KI antworten darf. Wenn keine ausgewählt sind, antwortet die KI auf keine Benutzer.';
 $string['alreadysubmitted'] = 'Diese Anfrage wurde bereits genehmigt, abgelehnt oder existiert nicht.';
 $string['approve'] = 'Genehmigen';
+$string['autogradegrader'] = 'Bewertender Benutzer für automatische Freigaben';
+$string['autogradegrader_help'] = 'Wähle den Benutzer aus, der als Bewerter registriert wird, wenn KI-Feedback automatisch freigegeben wird. Es werden nur Benutzer angezeigt, die die Berechtigung zur Bewertung in diesem Kurs haben.';
 $string['backtodiscussion'] = 'Zurück zur Diskussion';
 $string['backup:includeai'] = 'KI-Forendaten in Sicherungen einschließen';
 $string['cancel'] = 'Abbrechen';
@@ -58,10 +61,13 @@ $string['enablediainitconversation_help'] = 'Wenn diese Option aktiviert ist, ka
 $string['err_table_missing'] = 'Die Konfigurationstabelle für Forum KI existiert nicht. Bitte aktualisiere das Plugin unter Website-Administration > Mitteilungen.';
 $string['error_airequest'] = 'Fehler bei der Kommunikation mit dem KI-Dienst: {$a}';
 $string['error_saving'] = 'Fehler beim Speichern der Konfiguration: {$a}';
+$string['evaluatingwithai'] = 'Auswertung mit KI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'KI-generierte Forenantworten genehmigen oder ablehnen';
+$string['forum_ai:useaireview'] = 'Verwenden Sie die KI-Überprüfungsfunktion, um das Forum zu bewerten';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Zu Benachrichtigungen gehen';
+$string['grade'] = 'Bewertung';
 $string['historyresponses'] = 'KI-Forum Antwortverlauf';
 $string['invalidaction'] = 'Die angegebene Aktion ist ungültig.';
 $string['invalidrole'] = 'Eine oder mehrere ausgewählte Rollen sind ungültig.';
@@ -75,14 +81,23 @@ $string['nohistory'] = 'Kein Verlauf genehmigter oder abgelehnter KI-Antworten.'
 $string['nopermission'] = 'Du hast keine Berechtigung, KI-Antworten zu genehmigen oder abzulehnen.';
 $string['noresponses'] = 'Keine Antworten zur Genehmigung ausstehend.';
 $string['noteachersfound'] = 'Keine Lehrer für diesen Kurs gefunden.';
-$string['notification_approve_link'] = 'Direkt genehmigen: {$a->url}';
 $string['notification_course_label'] = 'Kurs';
+$string['notification_fullmessage'] = 'Hallo {$a->firstname},
+
+Für die Diskussion "{$a->discussion}" im Forum "{$a->forum}" (Kurs: {$a->course}) wurde eine KI-generierte Antwort erstellt.
+
+Vorschau: {$a->preview}...
+
+Um die vollständige Nachricht zu überprüfen und zu entscheiden, ob sie genehmigt oder abgelehnt werden soll, besuche bitte:
+{$a->reviewurl}
+
+Schnellaktionen:
+- Genehmigen: {$a->approveurl}
+- Ablehnen: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hallo {$a->firstname},';
 $string['notification_intro'] = 'Eine automatische Antwort wurde für die Diskussion "{$a->discussion}" im Forum "{$a->forum}" des Kurses "{$a->course}" generiert.';
 $string['notification_preview'] = 'Vorschau:';
-$string['notification_reject_link'] = 'Ablehnen: {$a->url}';
 $string['notification_review_button'] = 'Antwort überprüfen';
-$string['notification_review_link'] = 'Überprüfe und genehmige die Antwort unter: {$a->url}';
 $string['notification_smallmessage'] = 'Neue KI-Antwort ausstehend in "{$a->discussion}"';
 $string['notification_subject'] = 'Genehmigung erforderlich: KI-Antwort';
 $string['originalmessage'] = 'Ursprüngliche Nachricht';
@@ -124,6 +139,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Genehmigt';
 $string['statuspending'] = 'Ausstehend';
 $string['statusrejected'] = 'Abgelehnt';
+$string['task_process_single_forum_discussion'] = 'Ein einzelnes Diskussionsforum für KI verarbeiten';
 $string['username'] = 'Ersteller';
 $string['viewdetails'] = 'Details';
 $string['yes'] = 'Ja';

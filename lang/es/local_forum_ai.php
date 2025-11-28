@@ -31,11 +31,14 @@ $string['ai_response'] = 'Respuesta IA';
 $string['ai_response_approved'] = 'Respuesta IA Aprobada';
 $string['ai_response_proposed'] = 'Respuesta IA propuesta';
 $string['ai_response_rejected'] = 'Respuesta IA Rechazada';
+$string['ai_review_button'] = 'Revisar con IA';
 $string['aiproposed'] = 'Respuesta AI propuesta';
 $string['allowedroles'] = 'Roles permitidos para respuestas de IA';
 $string['allowedroles_help'] = 'Selecciona qué roles de usuario pueden recibir respuestas de la IA. Si no se selecciona ninguno, la IA no responderá a ningún usuario.';
 $string['alreadysubmitted'] = 'Esta solicitud ya fue aprobada, rechazada o no existe.';
 $string['approve'] = 'Aprobar';
+$string['autogradegrader'] = 'Usuario calificador para aprobaciones automáticas';
+$string['autogradegrader_help'] = 'Selecciona al usuario que se registrará como calificador cuando la retroalimentación de IA se apruebe automáticamente. Solo se listan usuarios con permiso para calificar en este curso.';
 $string['backtocourse'] = 'Regresar al curso';
 $string['backtodiscussion'] = 'Volver al debate';
 $string['backup:includeai'] = 'Incluir datos del foro de IA en las copias de seguridad';
@@ -59,10 +62,13 @@ $string['enablediainitconversation_help'] = 'Al habilitar esta opción, la IA po
 $string['err_table_missing'] = 'La tabla de configuración para Forum AI no existe. Por favor, actualiza el plugin desde Administración del sitio > Notificaciones.';
 $string['error_airequest'] = 'Error al comunicarse con el servicio de IA: {$a}';
 $string['error_saving'] = 'Error al guardar la configuración: {$a}';
+$string['evaluatingwithai'] = 'Evaluando con IA...';
 $string['forum'] = 'Foro';
 $string['forum_ai:approveresponses'] = 'Aprobar o rechazar respuestas generadas por IA en los foros';
+$string['forum_ai:useaireview'] = 'Utilice la función de revisión de IA para calificar el foro';
 $string['forumname'] = 'Foro';
 $string['goto_notifications'] = 'Ir a Notificaciones';
+$string['grade'] = 'Calificación';
 $string['historyresponses'] = 'Historial de respuestas Foro IA';
 $string['invalidaction'] = 'La acción indicada no es válida.';
 $string['invalidrole'] = 'Uno o más roles seleccionados no son válidos.';
@@ -76,14 +82,23 @@ $string['nohistory'] = 'No hay historial de respuestas IA aprobadas o rechazadas
 $string['nopermission'] = 'No tienes permisos para aprobar/rechazar respuestas AI.';
 $string['noresponses'] = 'No hay respuestas pendientes de aprobación.';
 $string['noteachersfound'] = 'No se encontraron profesores para este curso.';
-$string['notification_approve_link'] = 'Aprobar directamente: {$a->url}';
 $string['notification_course_label'] = 'Curso';
+$string['notification_fullmessage'] = 'Hola {$a->firstname},
+
+Se ha generado una respuesta con IA para la discusión "{$a->discussion}" en el foro "{$a->forum}" (Curso: {$a->course}).
+
+Vista previa: {$a->preview}...
+
+Para revisar el mensaje completo y decidir si aprobarlo o rechazarlo, por favor visita:
+{$a->reviewurl}
+
+Acciones rápidas:
+- Aprobar: {$a->approveurl}
+- Rechazar: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hola {$a->firstname},';
 $string['notification_intro'] = 'Se ha generado una respuesta automática para el debate "{$a->discussion}" en el foro "{$a->forum}" del curso "{$a->course}".';
 $string['notification_preview'] = 'Vista previa:';
-$string['notification_reject_link'] = 'Rechazar: {$a->url}';
 $string['notification_review_button'] = 'Revisar respuesta';
-$string['notification_review_link'] = 'Revisa y aprueba la respuesta en: {$a->url}';
 $string['notification_smallmessage'] = 'Nueva respuesta AI pendiente en "{$a->discussion}"';
 $string['notification_subject'] = 'Aprobación requerida: Respuesta AI';
 $string['originalmessage'] = 'Mensaje original';
@@ -125,6 +140,7 @@ $string['status'] = 'Estado';
 $string['statusapproved'] = 'Aprobado';
 $string['statuspending'] = 'Pendiente';
 $string['statusrejected'] = 'Rechazado';
+$string['task_process_single_forum_discussion'] = 'Procesar un único foro de discusión para IA';
 $string['username'] = 'Creador';
 $string['viewdetails'] = 'Detalles';
 $string['yes'] = 'Si';

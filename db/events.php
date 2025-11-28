@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Configuración del plugin Forum AI.
+ * Event observers configuration for Forum AI plugin.
  *
  * @package    local_forum_ai
  * @category   admin
@@ -28,37 +28,36 @@ defined('MOODLE_INTERNAL') || die();
 $observers = [
     [
         'eventname'   => '\mod_forum\event\discussion_created',
-        'callback'    => '\local_forum_ai\observer::discussion_created',
-        'includefile' => '/local/forum_ai/classes/observer.php',
+        'callback'    => '\local_forum_ai\observer\discussion::discussion_created',
         'internal'    => false,
         'priority'    => 9999,
     ],
     [
         'eventname'   => '\core\event\course_module_created',
-        'callback'    => '\local_forum_ai\observer::course_module_created',
-        'includefile' => '/local/forum_ai/classes/observer.php',
+        'callback'    => '\local_forum_ai\observer\module::course_module_created',
         'internal'    => false,
         'priority'    => 9999,
     ],
     [
         'eventname'   => '\core\event\course_module_deleted',
-        'callback'    => '\local_forum_ai\observer::forum_deleted',
-        'includefile' => '/local/forum_ai/classes/observer.php',
+        'callback'    => '\local_forum_ai\observer\module::forum_deleted',
         'internal'    => false,
         'priority'    => 9999,
     ],
     [
         'eventname'   => '\mod_forum\event\discussion_deleted',
-        'callback'    => '\local_forum_ai\observer::discussion_deleted',
-        'includefile' => '/local/forum_ai/classes/observer.php',
+        'callback'    => '\local_forum_ai\observer\discussion::discussion_deleted',
         'internal'    => false,
         'priority'    => 9999,
     ],
     [
-        'eventname' => '\mod_forum\event\post_created',
-        'callback' => '\local_forum_ai\observer::post_created',
-        'includefile' => '/local/forum_ai/classes/observer.php',
+        'eventname'   => '\mod_forum\event\post_created',
+        'callback'    => '\local_forum_ai\observer\post::post_created',
         'internal'    => false,
         'priority'    => 9999,
+    ],
+    [
+        'eventname' => '\mod_forum\event\post_deleted',
+        'callback'  => 'local_forum_ai\observer\post::post_deleted',
     ],
 ];

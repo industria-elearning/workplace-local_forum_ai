@@ -51,7 +51,6 @@ $PAGE->set_title(get_string('pendingresponses', 'local_forum_ai'));
 $PAGE->set_heading($course->fullname);
 $PAGE->requires->css('/local/forum_ai/styles/review.css');
 
-local_forum_ai_cleanup_pending();
 $removed = local_forum_ai_cleanup_expired();
 if ($removed > 0) {
     debugging("Forum AI: {$removed} expired responses were removed.", DEBUG_DEVELOPER);

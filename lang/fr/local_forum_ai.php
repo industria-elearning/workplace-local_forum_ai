@@ -31,11 +31,14 @@ $string['ai_response'] = 'Réponse IA';
 $string['ai_response_approved'] = 'Réponse IA approuvée';
 $string['ai_response_proposed'] = 'Réponse IA proposée';
 $string['ai_response_rejected'] = 'Réponse IA rejetée';
+$string['ai_review_button'] = 'Réviser avec l\'IA';
 $string['aiproposed'] = 'Réponse IA proposée';
 $string['allowedroles'] = 'Rôles autorisés pour les réponses de l’IA';
 $string['allowedroles_help'] = 'Sélectionnez les rôles d’utilisateurs auxquels l’IA est autorisée à répondre. Si aucun n’est sélectionné, l’IA ne répondra à aucun utilisateur.';
 $string['alreadysubmitted'] = 'Cette demande a déjà été approuvée, rejetée ou n’existe pas.';
 $string['approve'] = 'Approuver';
+$string['autogradegrader'] = 'Utilisateur évaluateur pour les validations automatiques';
+$string['autogradegrader_help'] = 'Sélectionne l’utilisateur qui sera enregistré comme évaluateur lorsque le retour de l’IA est approuvé automatiquement. Seuls les utilisateurs disposant des permissions d’évaluation dans ce cours sont listés.';
 $string['backtodiscussion'] = 'Retour à la discussion';
 $string['backup:includeai'] = 'Inclure les données du forum IA dans les sauvegardes';
 $string['cancel'] = 'Annuler';
@@ -58,10 +61,13 @@ $string['enablediainitconversation_help'] = 'En activant cette option, l’IA po
 $string['err_table_missing'] = 'La table de configuration du Forum IA n’existe pas. Veuillez mettre à jour le plugin via Administration du site > Notifications.';
 $string['error_airequest'] = 'Erreur de communication avec le service IA : {$a}';
 $string['error_saving'] = 'Erreur lors de l’enregistrement de la configuration : {$a}';
+$string['evaluatingwithai'] = 'Évaluation avec l’IA...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Approuver ou rejeter les réponses générées par l’IA dans le forum';
+$string['forum_ai:useaireview'] = 'Utilisez la fonction de révision par IA pour évaluer le forum';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Aller aux notifications';
+$string['grade'] = 'Note';
 $string['historyresponses'] = 'Historique des réponses Forum IA';
 $string['invalidaction'] = 'L’action indiquée n’est pas valide.';
 $string['invalidrole'] = 'Un ou plusieurs rôles sélectionnés sont invalides.';
@@ -75,14 +81,23 @@ $string['nohistory'] = 'Aucun historique de réponses IA approuvées ou rejetée
 $string['nopermission'] = 'Vous n’avez pas la permission d’approuver ou de rejeter les réponses IA.';
 $string['noresponses'] = 'Aucune réponse en attente d’approbation.';
 $string['noteachersfound'] = 'Aucun enseignant trouvé pour ce cours.';
-$string['notification_approve_link'] = 'Approuver directement : {$a->url}';
 $string['notification_course_label'] = 'Cours';
+$string['notification_fullmessage'] = 'Bonjour {$a->firstname},
+
+Une réponse générée par IA a été créée pour la discussion "{$a->discussion}" dans le forum "{$a->forum}" (Cours : {$a->course}).
+
+Aperçu : {$a->preview}...
+
+Pour consulter le message complet et décider de l’approuver ou de le rejeter, veuillez visiter :
+{$a->reviewurl}
+
+Actions rapides :
+- Approuver : {$a->approveurl}
+- Rejeter : {$a->rejecturl}';
 $string['notification_greeting'] = 'Bonjour {$a->firstname},';
 $string['notification_intro'] = 'Une réponse automatique a été générée pour la discussion "{$a->discussion}" dans le forum "{$a->forum}" du cours "{$a->course}".';
 $string['notification_preview'] = 'Aperçu :';
-$string['notification_reject_link'] = 'Rejeter : {$a->url}';
 $string['notification_review_button'] = 'Examiner la réponse';
-$string['notification_review_link'] = 'Examinez et approuvez la réponse sur : {$a->url}';
 $string['notification_smallmessage'] = 'Nouvelle réponse IA en attente dans "{$a->discussion}"';
 $string['notification_subject'] = 'Approbation requise : Réponse IA';
 $string['originalmessage'] = 'Message original';
@@ -124,6 +139,7 @@ $string['status'] = 'Statut';
 $string['statusapproved'] = 'Approuvé';
 $string['statuspending'] = 'En attente';
 $string['statusrejected'] = 'Rejeté';
+$string['task_process_single_forum_discussion'] = 'Traiter un seul forum de discussion pour l\'IA';
 $string['username'] = 'Créateur';
 $string['viewdetails'] = 'Détails';
 $string['yes'] = 'Oui';

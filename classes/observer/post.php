@@ -1,0 +1,85 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+namespace local_forum_ai\observer;
+
+use mod_forum\event\post_created;
+use mod_forum\event\post_deleted;
+use local_forum_ai\task\process_ai_post;
+
+/**
+ * Forum post event observer for AI integration.
+ *
+ * @package local_forum_ai
+ * @copyright 2025 Datacurso
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class post {
+    /**
+     * Handles the post_created event when a user replies to a forum discussion.
+     *
+     * @param post_created $event Forum post created event.
+     * @return bool Always returns true to prevent Moodle event interruption.
+     */
+    public static function post_created(post_created $event): bool {
+        global $DB;
+
+        try {
+            $data = $event->get_data();
+            $postid = $data['objectid'];
+
+            $post = $DB->get_record('forum_posts', ['id' => $postid], '*', MUST_EXIST);
+            $discussion = $DB->get_record('forum_discussions', ['id' => $post->discussion], '*', MUST_EXIST);
+            $forum = $DB->get_record('forum', ['id' => $discussion->forum], '*', MUST_EXIST);
+            $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+
+            // Get course module.
+            $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+            // Prepare data for ad-hoc task.
+            $taskdata = new \stdClass();
+            $taskdata->postid = $postid;
+            $taskdata->cmid = $cm->id;
+
+            // Create and queue the ad-hoc task.
+            $task = new process_ai_post();
+            $task->set_custom_data($taskdata);
+            $task->set_component('local_forum_ai');
+            $task->set_userid($post->userid);
+
+            \core\task\manager::queue_adhoc_task($task);
+
+            return true;
+        } catch (\Throwable $e) {
+            debugging('Error queueing AI response task: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return true;
+        }
+    }
+
+    /**
+     * Handles the post_deleted event when a forum post is removed.
+     *
+     * @param post_deleted $event Forum post deleted event.
+     * @return void
+     */
+    public static function post_deleted(post_deleted $event): void {
+        global $DB;
+
+        $postid = $event->objectid;
+
+        $DB->delete_records('local_forum_ai_pending', ['parentpostid' => $postid]);
+    }
+}

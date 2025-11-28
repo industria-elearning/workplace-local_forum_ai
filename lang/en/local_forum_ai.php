@@ -31,11 +31,14 @@ $string['ai_response'] = 'AI Response';
 $string['ai_response_approved'] = 'AI Response Approved';
 $string['ai_response_proposed'] = 'Proposed AI Response';
 $string['ai_response_rejected'] = 'AI Response Rejected';
+$string['ai_review_button'] = 'Review with AI';
 $string['aiproposed'] = 'Proposed AI Response';
 $string['allowedroles'] = 'Allowed roles for AI responses';
 $string['allowedroles_help'] = 'Select which user roles the AI is allowed to respond to. If none are selected, the AI will not respond to any users.';
 $string['alreadysubmitted'] = 'This request has already been approved, rejected, or does not exist.';
 $string['approve'] = 'Approve';
+$string['autogradegrader'] = 'Recorded grader for auto approvals';
+$string['autogradegrader_help'] = 'Select the user who will be recorded as the grader whenever AI feedback is auto approved. Only users who can grade assignments in this course are listed.';
 $string['backtocourse'] = 'Back to course';
 $string['backtodiscussion'] = 'Back to discussion';
 $string['backup:includeai'] = 'Include AI forum data in backups';
@@ -59,10 +62,13 @@ $string['enablediainitconversation_help'] = 'Enabling this option will allow the
 $string['err_table_missing'] = 'The configuration table for Forum AI does not exist. Please update the plugin from Site Administration > Notifications.';
 $string['error_airequest'] = 'Error communicating with AI service: {$a}';
 $string['error_saving'] = 'Error saving configuration: {$a}';
+$string['evaluatingwithai'] = 'Evaluating with AI...';
 $string['forum'] = 'Forum';
 $string['forum_ai:approveresponses'] = 'Approve or reject AI-generated forum responses';
+$string['forum_ai:useaireview'] = 'Use AI review functionality for forum grading';
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Go to Notifications';
+$string['grade'] = 'Grade';
 $string['historyresponses'] = 'Forum AI Response History';
 $string['invalidaction'] = 'The specified action is invalid.';
 $string['invalidrole'] = 'One or more selected roles are invalid.';
@@ -76,14 +82,23 @@ $string['nohistory'] = 'No approved or rejected AI responses found.';
 $string['nopermission'] = 'You do not have permission to approve or reject AI responses.';
 $string['noresponses'] = 'No pending responses for approval.';
 $string['noteachersfound'] = 'No teachers found for this course.';
-$string['notification_approve_link'] = 'Approve directly: {$a->url}';
 $string['notification_course_label'] = 'Course';
+$string['notification_fullmessage'] = 'Hello {$a->firstname},
+
+An AI-generated response has been created for the discussion "{$a->discussion}" in the forum "{$a->forum}" (Course: {$a->course}).
+
+Preview: {$a->preview}...
+
+To review the complete message and decide whether to approve or reject it, please visit:
+{$a->reviewurl}
+
+Quick actions:
+- Approve: {$a->approveurl}
+- Reject: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hello {$a->firstname},';
 $string['notification_intro'] = 'An automatic response has been generated for the discussion "{$a->discussion}" in the forum "{$a->forum}" of the course "{$a->course}".';
 $string['notification_preview'] = 'Preview:';
-$string['notification_reject_link'] = 'Reject: {$a->url}';
 $string['notification_review_button'] = 'Review Response';
-$string['notification_review_link'] = 'Review and approve the response at: {$a->url}';
 $string['notification_smallmessage'] = 'New pending AI response in "{$a->discussion}"';
 $string['notification_subject'] = 'Approval Required: AI Response';
 $string['originalmessage'] = 'Original message';
@@ -125,6 +140,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Approved';
 $string['statuspending'] = 'Pending';
 $string['statusrejected'] = 'Rejected';
+$string['task_process_single_forum_discussion'] = 'Process single forum discussion for AI';
 $string['username'] = 'Creator';
 $string['viewdetails'] = 'Details';
 $string['yes'] = 'Yes';

@@ -30,8 +30,8 @@ use moodle_exception;
 /**
  * External service to approve or reject AI-generated responses in forums.
  *
- * Define the webservice function `local_forum_ai_approve response`
- * which allows you to approve or reject pending responses.
+ * Defines the webservice function `local_forum_ai_approve_response`
+ * which allows approving or rejecting pending AI responses.
  *
  * @package    local_forum_ai
  * @category   external
@@ -42,7 +42,7 @@ class approve_response extends external_api {
     /**
      * Define the input parameters of the external function.
      *
-     * @return external_function_parameters parameter structure
+     * @return external_function_parameters Parameter structure
      */
     public static function execute_parameters() {
         return new external_function_parameters([
@@ -56,11 +56,11 @@ class approve_response extends external_api {
      *
      * @param string $token  Approval token associated with the pending response
      * @param string $action Action to perform: approve or reject
-     * @return array result with 'success' key in case of success
-     * @throws moodle_exception if the validations or permissions are not met
+     * @return array Result with 'success' key in case of success
+     * @throws moodle_exception If the validations or permissions are not met
      */
     public static function execute($token, $action) {
-        global $DB, $CFG, $USER;
+        global $DB, $CFG;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'token'  => $token,
@@ -81,7 +81,6 @@ class approve_response extends external_api {
 
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
-
         require_capability('mod/forum:viewdiscussion', $context);
 
         if ($params['action'] === 'approve') {
@@ -93,10 +92,7 @@ class approve_response extends external_api {
                 throw new moodle_exception('noteachersfound', 'local_forum_ai');
             }
 
-            $realuser = $USER;
-            $USER = \core_user::get_user($teacher->id);
-
-            // Determine the correct parent based on parentpostid.
+            // Determine the correct parent post based on parentpostid.
             $parentid = $discussion->firstpost;
 
             if (!empty($pending->parentpostid)) {
@@ -128,9 +124,46 @@ class approve_response extends external_api {
             $post->messageformat = FORMAT_HTML;
             $post->messagetrust  = 1;
 
-            forum_add_new_post($post, null);
+            $newpostid = forum_add_new_post($post, null);
 
-            $USER = $realuser;
+            $gradingenabled = ($forum->assessed != 0);
+
+            if ($gradingenabled && !empty($pending->grade) && !empty($pending->parentpostid)) {
+                try {
+                    // Load plugin configuration to get grader user.
+                    $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
+                    $graderid = $config->graderid ?? null;
+
+                    if (!$graderid) {
+                        debugging('No grader configured for AI ratings in forum ' . $forum->id, DEBUG_DEVELOPER);
+                    } else {
+                        // Get the original post that was graded.
+                        $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
+
+                        if ($originalpost) {
+                            // Use custom function to add rating without modifying global $USER.
+                            $result = local_forum_ai_add_rating(
+                                $cm,
+                                $context,
+                                'mod_forum',
+                                'post',
+                                $pending->parentpostid,
+                                $forum->scale,
+                                $pending->grade,
+                                $originalpost->userid,
+                                $forum->assessed,
+                                $graderid
+                            );
+
+                            if (!empty($result->error)) {
+                                debugging('Error adding AI rating on manual approval: ' . $result->error, DEBUG_DEVELOPER);
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                    debugging('Exception adding rating on manual approval: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                }
+            }
 
             $pending->status       = 'approved';
             $pending->approved_at  = time();
@@ -150,7 +183,7 @@ class approve_response extends external_api {
     /**
      * Define the output structure of the external function.
      *
-     * @return external_single_structure return structure
+     * @return external_single_structure Return structure
      */
     public static function execute_returns() {
         return new external_single_structure([
