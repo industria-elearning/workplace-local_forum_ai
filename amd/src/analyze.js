@@ -7,18 +7,24 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle. If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Forum AI grading integration.
+ * Forum AI grading integration module.
  *
- * Displays and manages the AI Review button inside the forum grading panel,
- * keeping it persistent and preventing multiple submissions by showing
- * a loading state.
+ * Responsible for injecting and managing the "Review with AI" button
+ * inside the Moodle forum grading interface. The button is dynamically
+ * repositioned depending on the active grading method (simple grade,
+ * rubric, or marking guide) and reacts to real DOM changes instead
+ *
+ * This implementation improves performance and stability by using:
+ *  - Moodle PubSub events
+ *  - MutationObserver for DOM changes
+ *  - Controlled button state handling
  *
  * @module      local_forum_ai/analyze
  * @copyright   2025 Datacurso
@@ -42,7 +48,9 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
         }
 
         /**
-         * Injects the AI button into the appropriate grading container
+         * Injects the AI button into the active grading container.
+         * It detects which grading form is currently visible and
+         * safely places the button inside it.
          *
          * @returns {void}
          */
@@ -79,12 +87,18 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
             }
         };
 
+        /**
+         * Reinject button when the Moodle grading drawer opens.
+         */
         PubSub.subscribe('drawer-opened', function () {
             setTimeout(injectButtonIntoGrader, 300);
         });
 
         observeUserChange();
-        setInterval(injectButtonIntoGrader, 800);
+        observeGradingPanel();
+
+        // Initial injection attempt on load
+        setTimeout(injectButtonIntoGrader, 500);
 
         /**
          * Handles AI button click event.
@@ -141,7 +155,8 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
         });
 
         /**
-         * Observes changes in the user selector to re-inject the button
+         * Observes changes in the user selector to reinject the button
+         * when a different student is selected.
          *
          * @returns {void}
          */
@@ -158,10 +173,29 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
 
             observer.observe(container, { childList: true, subtree: true });
         }
+
+        /**
+         * Observes the grading panel DOM and reinjects the button
+         * only when real structural changes occur.
+         *
+         * @returns {void}
+         */
+        function observeGradingPanel() {
+
+            const observer = new MutationObserver(function () {
+                injectButtonIntoGrader();
+            });
+
+            // Observe the full document body as Moodle dynamically rebuilds graders
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
     }
 
     /**
-     * Sets loading state on button.
+     * Sets loading state on the button.
      *
      * @param {HTMLElement} button
      * @returns {Promise<void>}
@@ -178,7 +212,7 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
     }
 
     /**
-     * Restores button after processing.
+     * Restores the button after processing completes.
      *
      * @param {HTMLElement} button
      */
@@ -193,7 +227,7 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
     }
 
     /**
-     * Applies a direct simple grade.
+     * Applies a simple direct grade.
      *
      * @param {Object} data
      */
@@ -243,15 +277,11 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
                         return;
                     }
 
-                    const descriptionText = descriptionSpan.textContent.trim();
-
-                    if (descriptionText === selectedLevel.description) {
+                    if (descriptionSpan.textContent.trim() === selectedLevel.description) {
                         input.checked = true;
                         input.setAttribute('aria-checked', 'true');
                         input.setAttribute('tabindex', '0');
-
                         input.setAttribute('data-initial-value', 'true');
-
                         input.dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 });
