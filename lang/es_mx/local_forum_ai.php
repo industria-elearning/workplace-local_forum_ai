@@ -82,14 +82,23 @@ $string['nohistory'] = 'No hay historial de respuestas IA aprobadas o rechazadas
 $string['nopermission'] = 'No tienes permisos para aprobar/rechazar respuestas AI.';
 $string['noresponses'] = 'No hay respuestas pendientes de aprobación.';
 $string['noteachersfound'] = 'No se encontraron profesores para este curso.';
-$string['notification_approve_link'] = 'Aprobar directamente: {$a->url}';
 $string['notification_course_label'] = 'Curso';
+$string['notification_fullmessage'] = 'Hola {$a->firstname},
+
+Se ha generado una respuesta con IA para la discusión "{$a->discussion}" en el foro "{$a->forum}" (Curso: {$a->course}).
+
+Vista previa: {$a->preview}...
+
+Para revisar el mensaje completo y decidir si aprobarlo o rechazarlo, por favor visita:
+{$a->reviewurl}
+
+Acciones rápidas:
+- Aprobar: {$a->approveurl}
+- Rechazar: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hola {$a->firstname},';
 $string['notification_intro'] = 'Se ha generado una respuesta automática para el debate "{$a->discussion}" en el foro "{$a->forum}" del curso "{$a->course}".';
 $string['notification_preview'] = 'Vista previa:';
-$string['notification_reject_link'] = 'Rechazar: {$a->url}';
 $string['notification_review_button'] = 'Revisar respuesta';
-$string['notification_review_link'] = 'Revisa y aprueba la respuesta en: {$a->url}';
 $string['notification_smallmessage'] = 'Nueva respuesta AI pendiente en "{$a->discussion}"';
 $string['notification_subject'] = 'Aprobación requerida: Respuesta AI';
 $string['originalmessage'] = 'Mensaje original';

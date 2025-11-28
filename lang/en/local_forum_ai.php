@@ -82,14 +82,23 @@ $string['nohistory'] = 'No approved or rejected AI responses found.';
 $string['nopermission'] = 'You do not have permission to approve or reject AI responses.';
 $string['noresponses'] = 'No pending responses for approval.';
 $string['noteachersfound'] = 'No teachers found for this course.';
-$string['notification_approve_link'] = 'Approve directly: {$a->url}';
 $string['notification_course_label'] = 'Course';
+$string['notification_fullmessage'] = 'Hello {$a->firstname},
+
+An AI-generated response has been created for the discussion "{$a->discussion}" in the forum "{$a->forum}" (Course: {$a->course}).
+
+Preview: {$a->preview}...
+
+To review the complete message and decide whether to approve or reject it, please visit:
+{$a->reviewurl}
+
+Quick actions:
+- Approve: {$a->approveurl}
+- Reject: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hello {$a->firstname},';
 $string['notification_intro'] = 'An automatic response has been generated for the discussion "{$a->discussion}" in the forum "{$a->forum}" of the course "{$a->course}".';
 $string['notification_preview'] = 'Preview:';
-$string['notification_reject_link'] = 'Reject: {$a->url}';
 $string['notification_review_button'] = 'Review Response';
-$string['notification_review_link'] = 'Review and approve the response at: {$a->url}';
 $string['notification_smallmessage'] = 'New pending AI response in "{$a->discussion}"';
 $string['notification_subject'] = 'Approval Required: AI Response';
 $string['originalmessage'] = 'Original message';

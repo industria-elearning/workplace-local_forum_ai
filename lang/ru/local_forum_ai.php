@@ -81,14 +81,23 @@ $string['nohistory'] = 'Нет истории одобренных или отк
 $string['nopermission'] = 'У вас нет прав для одобрения или отклонения ответов ИИ.';
 $string['noresponses'] = 'Нет ожидающих одобрения ответов.';
 $string['noteachersfound'] = 'Для этого курса преподаватели не найдены.';
-$string['notification_approve_link'] = 'Одобрить напрямую: {$a->url}';
 $string['notification_course_label'] = 'Курс';
+$string['notification_fullmessage'] = 'Здравствуйте, {$a->firstname},
+
+Для обсуждения "{$a->discussion}" на форуме "{$a->forum}" (Курс: {$a->course}) был сгенерирован ответ с использованием ИИ.
+
+Предварительный просмотр: {$a->preview}...
+
+Чтобы просмотреть полное сообщение и решить, одобрить его или отклонить, пожалуйста, перейдите по ссылке:
+{$a->reviewurl}
+
+Быстрые действия:
+- Одобрить: {$a->approveurl}
+- Отклонить: {$a->rejecturl}';
 $string['notification_greeting'] = 'Здравствуйте, {$a->firstname},';
 $string['notification_intro'] = 'Автоматический ответ был сгенерирован для обсуждения "{$a->discussion}" на форуме "{$a->forum}" курса "{$a->course}".';
 $string['notification_preview'] = 'Предпросмотр:';
-$string['notification_reject_link'] = 'Отклонить: {$a->url}';
 $string['notification_review_button'] = 'Проверить ответ';
-$string['notification_review_link'] = 'Проверьте и одобрите ответ по ссылке: {$a->url}';
 $string['notification_smallmessage'] = 'Новый ответ ИИ ожидает в "{$a->discussion}"';
 $string['notification_subject'] = 'Требуется одобрение: ответ ИИ';
 $string['originalmessage'] = 'Оригинальное сообщение';

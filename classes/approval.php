@@ -130,6 +130,8 @@ class approval {
                 $renderer = null;
             }
 
+            $preview = format_string(substr(strip_tags($pending->message), 0, 150));
+
             foreach ($finalrecipients as $recipient) {
                 $message = new \core\message\message();
                 $message->component = 'local_forum_ai';
@@ -137,8 +139,6 @@ class approval {
                 $message->userfrom = \core_user::get_noreply_user();
                 $message->userto = $recipient;
                 $message->subject = get_string('notification_subject', 'local_forum_ai');
-
-                $preview = format_string(substr(strip_tags($pending->message), 0, 150));
 
                 $templatedata = [
                     'str_greeting' => get_string('notification_greeting', 'local_forum_ai', ['firstname' => $recipient->firstname]),
@@ -153,16 +153,17 @@ class approval {
                     'str_course_label' => get_string('notification_course_label', 'local_forum_ai'),
                 ];
 
-                $message->fullmessage = self::get_plain_text_message(
-                    $recipient->firstname,
-                    $discussion->name,
-                    $forum->name,
-                    $course->fullname,
-                    $preview,
-                    $reviewurl->out(false),
-                    $approveurl->out(false),
-                    $rejecturl->out(false)
-                );
+                // Generate plain text message using single string with all parameters.
+                $message->fullmessage = get_string('notification_fullmessage', 'local_forum_ai', [
+                    'firstname' => $recipient->firstname,
+                    'discussion' => $discussion->name,
+                    'forum' => $forum->name,
+                    'course' => $course->fullname,
+                    'preview' => $preview,
+                    'reviewurl' => $reviewurl->out(false),
+                    'approveurl' => $approveurl->out(false),
+                    'rejecturl' => $rejecturl->out(false),
+                ]);
 
                 $message->fullmessageformat = FORMAT_PLAIN;
 
@@ -192,43 +193,6 @@ class approval {
             debugging('Error sending Moodle notification: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return false;
         }
-    }
-
-    /**
-     * Generates the plain text message for the notification.
-     *
-     * @param string $firstname The recipient's first name.
-     * @param string $discussionname The discussion name.
-     * @param string $forumname The forum name.
-     * @param string $coursefullname The course full name.
-     * @param string $preview The AI message preview.
-     * @param string $reviewurl The review URL.
-     * @param string $approveurl The approval URL.
-     * @param string $rejecturl The rejection URL.
-     * @return string The formatted plain text message.
-     */
-    public static function get_plain_text_message(
-        string $firstname,
-        string $discussionname,
-        string $forumname,
-        string $coursefullname,
-        string $preview,
-        string $reviewurl,
-        string $approveurl,
-        string $rejecturl
-    ): string {
-        $message = get_string('notification_greeting', 'local_forum_ai', ['firstname' => $firstname]) . "\n\n"
-            . get_string('notification_intro', 'local_forum_ai', [
-                'discussion' => $discussionname,
-                'forum' => $forumname,
-                'course' => $coursefullname,
-            ]) . "\n\n"
-            . get_string('notification_preview', 'local_forum_ai') . " " . $preview . "...\n\n"
-            . get_string('notification_review_link', 'local_forum_ai', ['url' => $reviewurl]) . "\n\n"
-            . get_string('notification_approve_link', 'local_forum_ai', ['url' => $approveurl]) . "\n"
-            . get_string('notification_reject_link', 'local_forum_ai', ['url' => $rejecturl]);
-
-        return $message;
     }
 
     /**

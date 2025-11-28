@@ -81,14 +81,23 @@ $string['nohistory'] = 'Aucun historique de réponses IA approuvées ou rejetée
 $string['nopermission'] = 'Vous n’avez pas la permission d’approuver ou de rejeter les réponses IA.';
 $string['noresponses'] = 'Aucune réponse en attente d’approbation.';
 $string['noteachersfound'] = 'Aucun enseignant trouvé pour ce cours.';
-$string['notification_approve_link'] = 'Approuver directement : {$a->url}';
 $string['notification_course_label'] = 'Cours';
+$string['notification_fullmessage'] = 'Bonjour {$a->firstname},
+
+Une réponse générée par IA a été créée pour la discussion "{$a->discussion}" dans le forum "{$a->forum}" (Cours : {$a->course}).
+
+Aperçu : {$a->preview}...
+
+Pour consulter le message complet et décider de l’approuver ou de le rejeter, veuillez visiter :
+{$a->reviewurl}
+
+Actions rapides :
+- Approuver : {$a->approveurl}
+- Rejeter : {$a->rejecturl}';
 $string['notification_greeting'] = 'Bonjour {$a->firstname},';
 $string['notification_intro'] = 'Une réponse automatique a été générée pour la discussion "{$a->discussion}" dans le forum "{$a->forum}" du cours "{$a->course}".';
 $string['notification_preview'] = 'Aperçu :';
-$string['notification_reject_link'] = 'Rejeter : {$a->url}';
 $string['notification_review_button'] = 'Examiner la réponse';
-$string['notification_review_link'] = 'Examinez et approuvez la réponse sur : {$a->url}';
 $string['notification_smallmessage'] = 'Nouvelle réponse IA en attente dans "{$a->discussion}"';
 $string['notification_subject'] = 'Approbation requise : Réponse IA';
 $string['originalmessage'] = 'Message original';

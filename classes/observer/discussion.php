@@ -96,7 +96,6 @@ class discussion {
             $task->set_userid($discussion->userid);
 
             \core\task\manager::queue_adhoc_task($task);
-
         } catch (\dml_missing_record_exception $e) {
             // Required record not found, log and skip.
             debugging(
@@ -128,7 +127,6 @@ class discussion {
 
             // Clean up pending AI processing records.
             $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
-
         } catch (\Throwable $e) {
             debugging(
                 'Error in discussion_deleted observer: ' . $e->getMessage(),

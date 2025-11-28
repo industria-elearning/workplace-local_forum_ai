@@ -81,14 +81,23 @@ $string['nohistory'] = 'Kein Verlauf genehmigter oder abgelehnter KI-Antworten.'
 $string['nopermission'] = 'Du hast keine Berechtigung, KI-Antworten zu genehmigen oder abzulehnen.';
 $string['noresponses'] = 'Keine Antworten zur Genehmigung ausstehend.';
 $string['noteachersfound'] = 'Keine Lehrer für diesen Kurs gefunden.';
-$string['notification_approve_link'] = 'Direkt genehmigen: {$a->url}';
 $string['notification_course_label'] = 'Kurs';
+$string['notification_fullmessage'] = 'Hallo {$a->firstname},
+
+Für die Diskussion "{$a->discussion}" im Forum "{$a->forum}" (Kurs: {$a->course}) wurde eine KI-generierte Antwort erstellt.
+
+Vorschau: {$a->preview}...
+
+Um die vollständige Nachricht zu überprüfen und zu entscheiden, ob sie genehmigt oder abgelehnt werden soll, besuche bitte:
+{$a->reviewurl}
+
+Schnellaktionen:
+- Genehmigen: {$a->approveurl}
+- Ablehnen: {$a->rejecturl}';
 $string['notification_greeting'] = 'Hallo {$a->firstname},';
 $string['notification_intro'] = 'Eine automatische Antwort wurde für die Diskussion "{$a->discussion}" im Forum "{$a->forum}" des Kurses "{$a->course}" generiert.';
 $string['notification_preview'] = 'Vorschau:';
-$string['notification_reject_link'] = 'Ablehnen: {$a->url}';
 $string['notification_review_button'] = 'Antwort überprüfen';
-$string['notification_review_link'] = 'Überprüfe und genehmige die Antwort unter: {$a->url}';
 $string['notification_smallmessage'] = 'Neue KI-Antwort ausstehend in "{$a->discussion}"';
 $string['notification_subject'] = 'Genehmigung erforderlich: KI-Antwort';
 $string['originalmessage'] = 'Ursprüngliche Nachricht';

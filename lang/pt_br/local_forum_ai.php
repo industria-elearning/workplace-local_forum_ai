@@ -81,14 +81,23 @@ $string['nohistory'] = 'Nenhum histórico de respostas de IA aprovadas ou rejeit
 $string['nopermission'] = 'Você não tem permissão para aprovar ou rejeitar respostas de IA.';
 $string['noresponses'] = 'Nenhuma resposta pendente de aprovação.';
 $string['noteachersfound'] = 'Nenhum professor encontrado para este curso.';
-$string['notification_approve_link'] = 'Aprovar diretamente: {$a->url}';
 $string['notification_course_label'] = 'Curso';
+$string['notification_fullmessage'] = 'Olá {$a->firstname},
+
+Uma resposta gerada por IA foi criada para a discussão "{$a->discussion}" no fórum "{$a->forum}" (Curso: {$a->course}).
+
+Pré-visualização: {$a->preview}...
+
+Para revisar a mensagem completa e decidir se deve aprová-la ou rejeitá-la, por favor visite:
+{$a->reviewurl}
+
+Ações rápidas:
+- Aprovar: {$a->approveurl}
+- Rejeitar: {$a->rejecturl}';
 $string['notification_greeting'] = 'Olá {$a->firstname},';
 $string['notification_intro'] = 'Uma resposta automática foi gerada para a discussão "{$a->discussion}" no fórum "{$a->forum}" do curso "{$a->course}".';
 $string['notification_preview'] = 'Pré-visualização:';
-$string['notification_reject_link'] = 'Rejeitar: {$a->url}';
 $string['notification_review_button'] = 'Revisar resposta';
-$string['notification_review_link'] = 'Revise e aprove a resposta em: {$a->url}';
 $string['notification_smallmessage'] = 'Nova resposta de IA pendente em "{$a->discussion}"';
 $string['notification_subject'] = 'Aprovação necessária: Resposta de IA';
 $string['originalmessage'] = 'Mensagem original';

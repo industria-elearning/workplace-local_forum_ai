@@ -81,14 +81,23 @@ $string['nohistory'] = 'Tidak ada riwayat respon AI yang disetujui atau ditolak.
 $string['nopermission'] = 'Anda tidak memiliki izin untuk menyetujui atau menolak respon AI.';
 $string['noresponses'] = 'Tidak ada respon yang menunggu persetujuan.';
 $string['noteachersfound'] = 'Tidak ada pengajar ditemukan untuk kursus ini.';
-$string['notification_approve_link'] = 'Setujui langsung: {$a->url}';
 $string['notification_course_label'] = 'Kursus';
+$string['notification_fullmessage'] = 'Halo {$a->firstname},
+
+Jawaban yang dihasilkan AI telah dibuat untuk diskusi "{$a->discussion}" di forum "{$a->forum}" (Kursus: {$a->course}).
+
+Pratinjau: {$a->preview}...
+
+Untuk meninjau pesan lengkap dan memutuskan apakah akan menyetujuinya atau menolaknya, silakan kunjungi:
+{$a->reviewurl}
+
+Tindakan cepat:
+- Setujui: {$a->approveurl}
+- Tolak: {$a->rejecturl}';
 $string['notification_greeting'] = 'Halo {$a->firstname},';
 $string['notification_intro'] = 'Respon otomatis telah dihasilkan untuk diskusi "{$a->discussion}" di forum "{$a->forum}" dalam kursus "{$a->course}".';
 $string['notification_preview'] = 'Pratinjau:';
-$string['notification_reject_link'] = 'Tolak: {$a->url}';
 $string['notification_review_button'] = 'Tinjau Respon';
-$string['notification_review_link'] = 'Tinjau dan setujui respon di: {$a->url}';
 $string['notification_smallmessage'] = 'Respon AI baru menunggu di "{$a->discussion}"';
 $string['notification_subject'] = 'Persetujuan Diperlukan: Respon AI';
 $string['originalmessage'] = 'Pesan asli';

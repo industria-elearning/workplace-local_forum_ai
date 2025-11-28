@@ -109,7 +109,6 @@ class process_single_forum_discussion extends \core\task\adhoc_task {
             );
 
             mtrace("Successfully processed discussion {$discussion->id}");
-
         } catch (\dml_exception $e) {
             // Database error occurred.
             mtrace("Database error in process_single_forum_discussion: " . $e->getMessage());
