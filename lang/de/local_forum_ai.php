@@ -130,6 +130,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Genehmigt';
 $string['statuspending'] = 'Ausstehend';
 $string['statusrejected'] = 'Abgelehnt';
+$string['task_process_single_forum_discussion'] = 'Ein einzelnes Diskussionsforum für KI verarbeiten';
 $string['username'] = 'Ersteller';
 $string['viewdetails'] = 'Details';
 $string['yes'] = 'Ja';

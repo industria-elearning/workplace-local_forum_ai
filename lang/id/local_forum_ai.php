@@ -130,6 +130,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Disetujui';
 $string['statuspending'] = 'Menunggu';
 $string['statusrejected'] = 'Ditolak';
+$string['task_process_single_forum_discussion'] = 'Memproses satu forum diskusi untuk AI';
 $string['username'] = 'Pembuat';
 $string['viewdetails'] = 'Detail';
 $string['yes'] = 'Ya';

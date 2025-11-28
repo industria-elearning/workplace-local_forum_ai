@@ -35,13 +35,17 @@ class module {
     /**
      * Handles creation of "single type" forums.
      *
+     * Queues an adhoc task to process the single forum discussion asynchronously,
+     * avoiding blocking the main execution thread.
+     *
      * @param course_module_created $event The event triggered when a module is created.
-     * @return bool True on success or when no action is needed, false on error.
+     * @return bool True on success or when no action is needed.
      */
     public static function course_module_created(course_module_created $event): bool {
         global $DB;
 
         try {
+            // Only process forum modules.
             if ($event->other['modulename'] !== 'forum') {
                 return true;
             }
@@ -49,65 +53,44 @@ class module {
             $forumid = $event->other['instanceid'];
             $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
 
+            // Only process single-type forums.
             if ($forum->type !== 'single') {
                 return true;
             }
 
-            $maxattempts = 5;
-            $discussion = null;
-
-            for ($i = 0; $i < $maxattempts; $i++) {
-                $discussion = $DB->get_record(
-                    'forum_discussions',
-                    ['forum' => $forum->id],
-                    '*',
-                    IGNORE_MULTIPLE
-                );
-
-                if ($discussion) {
-                    break;
-                }
-
-                sleep(1);
-            }
-
-            if (!$discussion) {
-                return true;
-            }
-
-            $singleevent = \mod_forum\event\discussion_created::create([
-            'objectid' => $discussion->id,
-            'context' => $event->get_context(),
-            'courseid' => $event->courseid,
-            'relateduserid' => $discussion->userid,
-            'other' => ['forumid' => $forumid],
+            // Queue an adhoc task to process the discussion asynchronously.
+            $task = new \local_forum_ai\task\process_single_forum_discussion();
+            $task->set_custom_data([
+                'forumid' => $forumid,
+                'courseid' => $event->courseid,
+                'contextid' => $event->get_context()->id,
+                'retries' => 0,
             ]);
 
-            discussion::discussion_created($singleevent);
+            // Schedule the task to run in 2 seconds to allow discussion creation.
+            $task->set_next_run_time(time() + 2);
+
+            \core\task\manager::queue_adhoc_task($task);
 
             return true;
         } catch (\Throwable $e) {
-            debugging('General error in course module created: ' . $e->getMessage(), DEBUG_DEVELOPER);
-
-            \core\notification::add(
-                get_string('error_airequest', 'local_forum_ai', $e->getMessage()),
-                \core\output\notification::NOTIFY_ERROR
-            );
-
+            debugging('Error in course_module_created observer: ' . $e->getMessage(), DEBUG_DEVELOPER);
             return true;
         }
     }
 
-
     /**
      * Triggered when a course module is deleted.
      *
-     * @param course_module_deleted $event
+     * Cleans up forum AI related data when a forum is deleted.
+     *
+     * @param course_module_deleted $event The event triggered when a module is deleted.
      * @return void
      */
     public static function forum_deleted(course_module_deleted $event): void {
         global $DB;
 
+        // Only process forum modules.
         if (!isset($event->other['modulename']) || $event->other['modulename'] !== 'forum') {
             return;
         }
@@ -119,6 +102,7 @@ class module {
 
         $forumid = $event->other['instanceid'];
 
+        // Clean up all forum AI related records.
         $DB->delete_records('local_forum_ai_config', ['forumid' => $forumid]);
         $DB->delete_records('local_forum_ai_pending', ['forumid' => $forumid]);
     }

@@ -40,7 +40,9 @@ class grading {
      * @return object|null Grading definition record or null if not found.
      */
     public static function get_definition(int $cmid) {
-        global $DB;
+        global $DB, $CFG;
+
+        require_once($CFG->dirroot . '/grade/grading/form/lib.php');
 
         $context = \context_module::instance($cmid);
 
@@ -56,7 +58,7 @@ class grading {
 
         return $DB->get_record('grading_definitions', [
             'areaid' => $area->id,
-            'status' => 20,
+            'status' => \gradingform_controller::DEFINITION_STATUS_READY,
         ]);
     }
 }

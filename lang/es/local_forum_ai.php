@@ -131,6 +131,7 @@ $string['status'] = 'Estado';
 $string['statusapproved'] = 'Aprobado';
 $string['statuspending'] = 'Pendiente';
 $string['statusrejected'] = 'Rechazado';
+$string['task_process_single_forum_discussion'] = 'Procesar un único foro de discusión para IA';
 $string['username'] = 'Creador';
 $string['viewdetails'] = 'Detalles';
 $string['yes'] = 'Si';

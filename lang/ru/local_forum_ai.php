@@ -130,6 +130,7 @@ $string['status'] = 'Статус';
 $string['statusapproved'] = 'Одобрено';
 $string['statuspending'] = 'Ожидает';
 $string['statusrejected'] = 'Отклонено';
+$string['task_process_single_forum_discussion'] = 'Обработать один форум обсуждений для ИИ';
 $string['username'] = 'Автор';
 $string['viewdetails'] = 'Подробнее';
 $string['yes'] = 'Да';

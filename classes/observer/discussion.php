@@ -32,30 +32,64 @@ class discussion {
     /**
      * Handles discussion creation events.
      *
+     * Queues an adhoc task to process the discussion with AI features.
+     *
      * @param discussion_created $event The discussion created event.
      * @return bool True on success, false on error.
      */
     public static function discussion_created(discussion_created $event): bool {
-        global $DB;
-
         try {
             $data = $event->get_data();
             $discussionid = $data['objectid'];
             $forumid = $data['other']['forumid'];
+            $courseid = $data['courseid'];
+            $context = $event->get_context();
 
+            self::process_discussion($discussionid, $forumid, $courseid, $context);
+
+            return true;
+        } catch (\Throwable $e) {
+            debugging('Error in discussion_created observer: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return true;
+        }
+    }
+
+    /**
+     * Processes a discussion for AI features.
+     *
+     * This method contains the actual logic for processing discussions and can be called
+     * both from the observer and from other places (like adhoc tasks) without creating
+     * artificial events.
+     *
+     * @param int $discussionid ID of the discussion.
+     * @param int $forumid ID of the forum.
+     * @param int $courseid ID of the course.
+     * @param \context $context Context of the forum.
+     * @return void
+     */
+    public static function process_discussion(int $discussionid, int $forumid, int $courseid, \context $context): void {
+        global $DB;
+
+        try {
+            // Get discussion, forum and course records.
             $discussion = $DB->get_record('forum_discussions', ['id' => $discussionid], '*', MUST_EXIST);
             $forum = $DB->get_record('forum', ['id' => $forumid], '*', MUST_EXIST);
-            $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
+            $course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
 
-            // Get course module.
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
+
+            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
+
+            if (!$config || empty($config->enabled)) {
+                return;
+            }
 
             // Prepare data for ad-hoc task.
             $taskdata = new \stdClass();
             $taskdata->discussionid = $discussionid;
             $taskdata->cmid = $cm->id;
 
-            // Create and queue the ad-hoc task.
+            // Create and queue the ad-hoc task for AI processing.
             $task = new process_ai_discussion();
             $task->set_custom_data($taskdata);
             $task->set_component('local_forum_ai');
@@ -63,15 +97,25 @@ class discussion {
 
             \core\task\manager::queue_adhoc_task($task);
 
-            return true;
+        } catch (\dml_missing_record_exception $e) {
+            // Required record not found, log and skip.
+            debugging(
+                'Missing record in process_discussion: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
         } catch (\Throwable $e) {
-            debugging('Error queueing AI discussion task: ' . $e->getMessage(), DEBUG_DEVELOPER);
-            return true;
+            // General error occurred.
+            debugging(
+                'Error processing discussion for AI: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
         }
     }
 
     /**
      * Triggered when a discussion is deleted.
+     *
+     * Cleans up AI-related pending records for the deleted discussion.
      *
      * @param discussion_deleted $event The event triggered when a discussion is deleted.
      * @return void
@@ -79,7 +123,17 @@ class discussion {
     public static function discussion_deleted(discussion_deleted $event): void {
         global $DB;
 
-        $discussionid = $event->objectid;
-        $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+        try {
+            $discussionid = $event->objectid;
+
+            // Clean up pending AI processing records.
+            $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+
+        } catch (\Throwable $e) {
+            debugging(
+                'Error in discussion_deleted observer: ' . $e->getMessage(),
+                DEBUG_DEVELOPER
+            );
+        }
     }
 }
