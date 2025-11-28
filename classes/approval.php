@@ -119,9 +119,9 @@ class approval {
                 return false;
             }
 
-            $reviewurl  = new \moodle_url('/local/forum_ai/review.php', ['token' => $approvaltoken]);
+            $reviewurl = new \moodle_url('/local/forum_ai/review.php', ['token' => $approvaltoken]);
             $approveurl = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'approve']);
-            $rejecturl  = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'reject']);
+            $rejecturl = new \moodle_url('/local/forum_ai/approve.php', ['token' => $approvaltoken, 'action' => 'reject']);
 
             $renderer = null;
             try {
@@ -141,16 +141,16 @@ class approval {
                 $preview = format_string(substr(strip_tags($pending->message), 0, 150));
 
                 $templatedata = [
-                'str_greeting' => get_string('notification_greeting', 'local_forum_ai', ['firstname' => $recipient->firstname]),
-                'discussionname' => $discussion->name,
-                'forumname' => $forum->name,
-                'preview' => $preview,
-                'reviewurl' => $reviewurl->out(false),
-                'coursefullname' => $course->fullname,
-                'str_subject' => get_string('notification_subject', 'local_forum_ai'),
-                'str_preview_label' => get_string('notification_preview', 'local_forum_ai'),
-                'str_review_button' => get_string('notification_review_button', 'local_forum_ai'),
-                'str_course_label' => get_string('notification_course_label', 'local_forum_ai'),
+                    'str_greeting' => get_string('notification_greeting', 'local_forum_ai', ['firstname' => $recipient->firstname]),
+                    'discussionname' => $discussion->name,
+                    'forumname' => $forum->name,
+                    'preview' => $preview,
+                    'reviewurl' => $reviewurl->out(false),
+                    'coursefullname' => $course->fullname,
+                    'str_subject' => get_string('notification_subject', 'local_forum_ai'),
+                    'str_preview_label' => get_string('notification_preview', 'local_forum_ai'),
+                    'str_review_button' => get_string('notification_review_button', 'local_forum_ai'),
+                    'str_course_label' => get_string('notification_course_label', 'local_forum_ai'),
                 ];
 
                 $message->fullmessage = self::get_plain_text_message(

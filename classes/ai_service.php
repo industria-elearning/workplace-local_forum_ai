@@ -42,8 +42,8 @@ class ai_service {
         $response = $client->request('POST', '/forum/chat', $payload);
 
         return [
-        'reply' => $response['reply'] ?? null,
-        'grade' => $response['grade'] ?? 0,
+            'reply' => $response['reply'] ?? null,
+            'grade' => $response['grade'] ?? 0,
         ];
     }
 

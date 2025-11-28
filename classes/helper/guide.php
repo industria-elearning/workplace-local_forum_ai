@@ -48,7 +48,7 @@ class guide {
         $area = $DB->get_record('grading_areas', [
             'contextid' => $context->id,
             'component' => 'mod_forum',
-            'areaname'  => 'forum',
+            'areaname' => 'forum',
         ]);
 
         if (!$area) {
@@ -84,12 +84,12 @@ class guide {
                 'criterion' => $criterion->shortname,
                 'description_students' => $criterion->description,
                 'description_evaluators' => $criterion->descriptionmarkers,
-                'maximum_score' => (float)$criterion->maxscore,
+                'maximum_score' => (float) $criterion->maxscore,
             ];
         }
 
         $comments = $DB->get_records('gradingform_guide_comments', [
-        'definitionid' => $definition->id,
+            'definitionid' => $definition->id,
         ]);
 
         if ($comments) {

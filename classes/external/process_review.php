@@ -46,7 +46,7 @@ class process_review extends external_api {
      */
     public static function execute_parameters() {
         return new external_function_parameters([
-            'cmid'   => new external_value(PARAM_INT, 'Course module ID'),
+            'cmid' => new external_value(PARAM_INT, 'Course module ID'),
             'userid' => new external_value(PARAM_INT, 'User ID'),
         ]);
     }
@@ -79,26 +79,26 @@ class process_review extends external_api {
         // Simple grade.
         if (isset($response['grade']) && is_numeric($response['grade'])) {
             return [
-            'type' => 'simple',
-            'data' => json_encode([
-                'grade' => (float)$response['grade'],
-            ], JSON_UNESCAPED_UNICODE),
+                'type' => 'simple',
+                'data' => json_encode([
+                    'grade' => (float) $response['grade'],
+                ], JSON_UNESCAPED_UNICODE),
             ];
         }
 
         // Rubric.
         if (isset($response['rubric'])) {
             return [
-            'type' => 'rubric',
-            'data' => json_encode($response['rubric'], JSON_UNESCAPED_UNICODE),
+                'type' => 'rubric',
+                'data' => json_encode($response['rubric'], JSON_UNESCAPED_UNICODE),
             ];
         }
 
         // Evaluation guide.
         if (is_array($response)) {
             return [
-            'type' => 'guide',
-            'data' => json_encode($response, JSON_UNESCAPED_UNICODE),
+                'type' => 'guide',
+                'data' => json_encode($response, JSON_UNESCAPED_UNICODE),
             ];
         }
 
@@ -116,8 +116,8 @@ class process_review extends external_api {
      */
     public static function execute_returns() {
         return new external_single_structure([
-        'type' => new external_value(PARAM_ALPHA, 'Evaluation type'),
-        'data' => new external_value(PARAM_RAW, 'Serialized AI Response'),
+            'type' => new external_value(PARAM_ALPHA, 'Evaluation type'),
+            'data' => new external_value(PARAM_RAW, 'Serialized AI Response'),
         ]);
     }
 }
