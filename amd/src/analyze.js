@@ -31,7 +31,8 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, Ajax, Str) {
+define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'],
+function ($, PubSub, Ajax, Str) {
 
     /**
      * Initializes the AI button integration for forum grading.
@@ -41,11 +42,63 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
     function init() {
 
         const $button = $('#forum-ai-review-btn');
+        const $messagesContainer = $('#forum-ai-review-messages');
         let lastState = null;
 
         if ($button.length === 0) {
             return;
         }
+
+        /**
+         * Shows a notification message above the button.
+         *
+         * @param {string} message - The message to display
+         * @param {string} type - Type of notification: 'success', 'error', 'warning', 'info'
+         */
+        const showNotification = function(message, type = 'info') {
+
+            // Limpiar notificaciones previas
+            $messagesContainer.empty();
+
+            // Mapear tipos a clases de Bootstrap de Moodle
+            const alertClasses = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            };
+
+            const iconClasses = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            };
+
+            const alertClass = alertClasses[type] || alertClasses['info'];
+            const iconClass = iconClasses[type] || iconClasses['info'];
+
+            const notificationHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fa ${iconClass}" aria-hidden="true"></i>
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `;
+
+            $messagesContainer.html(notificationHtml).show();
+
+            // Auto-ocultar después de 10 segundos (excepto errores)
+            if (type !== 'error') {
+                setTimeout(function() {
+                    $messagesContainer.find('.alert').fadeOut(function() {
+                        $(this).remove();
+                    });
+                }, 10000);
+            }
+        };
 
         /**
          * Injects the AI button into the active grading container.
@@ -73,13 +126,18 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
             if (!target || !$(target).is(':visible')) {
                 if (lastState !== 'hidden') {
                     $button.hide();
+                    $messagesContainer.hide();
                     lastState = 'hidden';
                 }
                 return;
             }
 
-            if (!$button.parent().is(target)) {
-                $button.detach().prependTo(target).show();
+            // Obtener el contenedor completo (botón + mensajes)
+            const $wrapper = $button.closest('.fitem');
+
+            if (!$wrapper.parent().is(target)) {
+                $wrapper.detach().prependTo(target).show();
+                $button.show();
                 lastState = 'visible';
             } else if (!$button.is(':visible')) {
                 $button.show();
@@ -114,6 +172,9 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
                 return;
             }
 
+            // Limpiar notificaciones anteriores
+            $messagesContainer.empty().hide();
+
             await setLoading(button);
 
             const cmid = new URLSearchParams(window.location.search).get('id');
@@ -122,6 +183,9 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
 
             if (!cmid || !userid) {
                 resetLoading(button);
+
+                showNotification('Missing required parameters (cmid or userid)', 'error');
+
                 return;
             }
 
@@ -133,24 +197,53 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
                 }
             }])[0].done(function (response) {
 
-                const data = JSON.parse(response.data);
+                try {
+                    const data = JSON.parse(response.data);
 
-                if (response.type === 'simple') {
-                    applySimpleGrade(data);
+                    if (response.type === 'simple') {
+                        applySimpleGrade(data);
+                    }
+
+                    if (response.type === 'rubric') {
+                        applyRubricGrade(data);
+                    }
+
+                    if (response.type === 'guide') {
+                        applyGuideGrade(data);
+                    }
+
+                    // Mostrar mensaje de éxito
+                    Str.get_string('gradesappliedsuccessfully', 'local_forum_ai').done(function(message) {
+                        showNotification(message, 'success');
+                    });
+
+                    resetLoading(button);
+
+                } catch (error) {
+                    resetLoading(button);
+
+                    showNotification('Error processing response: ' + error.message, 'error');
                 }
 
-                if (response.type === 'rubric') {
-                    applyRubricGrade(data);
-                }
-
-                if (response.type === 'guide') {
-                    applyGuideGrade(data);
-                }
-
+            }).fail(function (error) {
                 resetLoading(button);
 
-            }).fail(function () {
-                resetLoading(button);
+                // Extraer el mensaje de error detallado
+                let errorMessage = '';
+
+                if (error.error) {
+                    errorMessage = error.error;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                } else if (error.exception && error.exception.message) {
+                    errorMessage = error.exception.message;
+                } else if (error.debuginfo) {
+                    errorMessage = error.debuginfo;
+                } else {
+                    errorMessage = JSON.stringify(error);
+                }
+
+                showNotification(errorMessage, 'error');
             });
         });
 
@@ -168,7 +261,11 @@ define(['jquery', 'core/pubsub', 'core/ajax', 'core/str'], function ($, PubSub, 
             }
 
             const observer = new MutationObserver(function () {
-                setTimeout(injectButtonIntoGrader, 300);
+                setTimeout(function() {
+                    injectButtonIntoGrader();
+                    // Limpiar notificaciones al cambiar de usuario
+                    $messagesContainer.empty().hide();
+                }, 300);
             });
 
             observer.observe(container, { childList: true, subtree: true });
