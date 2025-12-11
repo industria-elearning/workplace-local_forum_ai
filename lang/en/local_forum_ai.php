@@ -69,6 +69,7 @@ $string['forum_ai:useaireview'] = 'Use AI review functionality for forum grading
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Go to Notifications';
 $string['grade'] = 'Grade';
+$string['gradesappliedsuccessfully'] = 'Grades applied successfully by AI';
 $string['historyresponses'] = 'Forum AI Response History';
 $string['invalidaction'] = 'The specified action is invalid.';
 $string['invalidrole'] = 'One or more selected roles are invalid.';
