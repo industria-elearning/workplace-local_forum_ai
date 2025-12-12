@@ -68,6 +68,7 @@ $string['forum_ai:useaireview'] = 'Verwenden Sie die KI-Überprüfungsfunktion, 
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Zu Benachrichtigungen gehen';
 $string['grade'] = 'Bewertung';
+$string['gradesappliedsuccessfully'] = 'Noten erfolgreich durch KI angewendet';
 $string['historyresponses'] = 'KI-Forum Antwortverlauf';
 $string['invalidaction'] = 'Die angegebene Aktion ist ungültig.';
 $string['invalidrole'] = 'Eine oder mehrere ausgewählte Rollen sind ungültig.';

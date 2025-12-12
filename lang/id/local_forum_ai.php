@@ -68,6 +68,7 @@ $string['forum_ai:useaireview'] = 'Gunakan fitur peninjauan AI untuk menilai for
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Buka Notifikasi';
 $string['grade'] = 'Nilai';
+$string['gradesappliedsuccessfully'] = 'Nilai berhasil diterapkan oleh AI';
 $string['historyresponses'] = 'Riwayat Respon Forum AI';
 $string['invalidaction'] = 'Tindakan yang ditentukan tidak valid.';
 $string['invalidrole'] = 'Satu atau lebih peran yang dipilih tidak valid.';

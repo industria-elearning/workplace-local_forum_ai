@@ -68,6 +68,7 @@ $string['forum_ai:useaireview'] = 'Utilize a função de revisão por IA para av
 $string['forumname'] = 'Fórum';
 $string['goto_notifications'] = 'Ir para Notificações';
 $string['grade'] = 'Classificação';
+$string['gradesappliedsuccessfully'] = 'Notas aplicadas com sucesso por IA';
 $string['historyresponses'] = 'Histórico de respostas do Fórum de IA';
 $string['invalidaction'] = 'A ação especificada é inválida.';
 $string['invalidrole'] = 'Uma ou mais funções selecionadas são inválidas.';

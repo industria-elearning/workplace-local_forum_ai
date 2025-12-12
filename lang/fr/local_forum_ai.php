@@ -68,6 +68,7 @@ $string['forum_ai:useaireview'] = 'Utilisez la fonction de révision par IA pour
 $string['forumname'] = 'Forum';
 $string['goto_notifications'] = 'Aller aux notifications';
 $string['grade'] = 'Note';
+$string['gradesappliedsuccessfully'] = 'Notes appliquées avec succès par l’IA';
 $string['historyresponses'] = 'Historique des réponses Forum IA';
 $string['invalidaction'] = 'L’action indiquée n’est pas valide.';
 $string['invalidrole'] = 'Un ou plusieurs rôles sélectionnés sont invalides.';
