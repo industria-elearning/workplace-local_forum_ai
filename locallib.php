@@ -206,33 +206,43 @@ function local_forum_ai_add_rating(
     $aggregationmethod,
     $rateruserid
 ) {
-    global $CFG, $DB;
+    global $CFG, $DB, $USER;
 
     $result = new stdClass();
     $rm = new rating_manager();
 
-    // Check the module rating permissions for the rater user.
-    $pluginpermissionsarray = $rm->get_plugin_permissions_array($context->id, $component, $ratingarea);
+    // Check the module rating permissions for the specific rater user.
+    $pluginpermissionsarray = [
+        'rate' => has_capability('moodle/rating:rate', $context, $rateruserid),
+        'view' => has_capability('moodle/rating:view', $context, $rateruserid),
+        'viewany' => has_capability('moodle/rating:viewany', $context, $rateruserid),
+        'viewall' => has_capability('moodle/rating:viewall', $context, $rateruserid),
+    ];
 
     if (!$pluginpermissionsarray['rate']) {
         $result->error = 'ratepermissiondenied';
         return $result;
     }
 
-    // Validate the rating.
-    $params = [
-        'context'     => $context,
-        'component'   => $component,
-        'ratingarea'  => $ratingarea,
-        'itemid'      => $itemid,
-        'scaleid'     => $scaleid,
-        'rating'      => $userrating,
-        'rateduserid' => $rateduserid,
-        'aggregation' => $aggregationmethod,
-    ];
+    if ($userrating != RATING_UNSET_RATING) {
+        $scale = $DB->get_record('scale', ['id' => $scaleid]);
+        if ($scale) {
+            $scalearray = explode(',', $scale->scale);
+            $scalemax = count($scalearray);
+            if ($userrating < 0 || $userrating > $scalemax) {
+                $result->error = 'ratinginvalid';
+                return $result;
+            }
+        } else {
+            if ($userrating < 0 || $userrating > $scaleid) {
+                $result->error = 'ratinginvalid';
+                return $result;
+            }
+        }
+    }
 
-    if (!$rm->check_rating_is_valid($params)) {
-        $result->error = 'ratinginvalid';
+    if ($rateruserid == $rateduserid) {
+        $result->error = 'norate';
         return $result;
     }
 
@@ -246,8 +256,33 @@ function local_forum_ai_add_rating(
     $ratingoptions->userid  = $rateruserid;
 
     if ($userrating != RATING_UNSET_RATING) {
-        $rating = new rating($ratingoptions);
-        $rating->update_rating($userrating);
+        $time = time();
+
+        $existingrating = $DB->get_record('rating', [
+            'contextid' => $context->id,
+            'component' => $component,
+            'ratingarea' => $ratingarea,
+            'itemid' => $itemid,
+            'userid' => $rateruserid,
+        ]);
+
+        if ($existingrating) {
+            $existingrating->rating = $userrating;
+            $existingrating->timemodified = $time;
+            $DB->update_record('rating', $existingrating);
+        } else {
+            $data = new stdClass();
+            $data->contextid = $context->id;
+            $data->component = $component;
+            $data->ratingarea = $ratingarea;
+            $data->rating = $userrating;
+            $data->scaleid = $scaleid;
+            $data->userid = $rateruserid;
+            $data->itemid = $itemid;
+            $data->timecreated = $time;
+            $data->timemodified = $time;
+            $DB->insert_record('rating', $data);
+        }
     } else {
         // Delete the rating if unset.
         $options = new stdClass();
@@ -285,11 +320,18 @@ function local_forum_ai_add_rating(
     $items = $rm->get_ratings($ratingoptions);
     $firstrating = $items[0]->rating;
 
-    if ($firstrating->user_can_view_aggregate()) {
+    $canview = has_capability('moodle/rating:view', $context, $rateruserid) ||
+               has_capability('moodle/rating:viewany', $context, $rateruserid) ||
+               has_capability('moodle/rating:viewall', $context, $rateruserid);
+
+    if ($canview && $firstrating) {
         $scalearray = null;
         $aggregatetoreturn = round($firstrating->aggregate, 1);
 
-        if ($firstrating->settings->aggregationmethod == RATING_AGGREGATE_COUNT || $firstrating->count == 0) {
+        if (
+            $firstrating->settings->aggregationmethod == RATING_AGGREGATE_COUNT ||
+            $firstrating->count == 0
+        ) {
             $aggregatetoreturn = ' - ';
         } else if ($firstrating->settings->scale->id < 0) {
             if ($firstrating->settings->aggregationmethod != RATING_AGGREGATE_SUM) {

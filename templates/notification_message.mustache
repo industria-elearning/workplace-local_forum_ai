@@ -15,27 +15,21 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_forum_ai/ai_review_button
+    @template local_forum_ai/notification_message
 
-    AI Review Button Template
-
-    Template used to render the "Review with AI" button inside the forum grading
-    interface. The button is initially hidden and displayed dynamically via JS.
-
-    No context variables required.
+    Notification message template for AI review feedback
 
     Example context (json):
-    {}
+    {
+        "message": "Grades applied successfully",
+        "type": "success",
+        "icon": "fa-check-circle"
+    }
 }}
-
-<div class="mb-3 fitem">
-
-    <div id="forum-ai-review-messages"></div>
-    <button type="button"
-            id="forum-ai-review-btn"
-            class="btn btn-primary datacurso-ai-button"
-            data-action="local_forum_ai/review_ai">
-        <i class="fa fa-magic" aria-hidden="true"></i>
-        {{#str}}ai_review_button, local_forum_ai{{/str}}
+<div class="alert alert-{{type}} alert-dismissible fade show" role="alert">
+    <i class="fa {{icon}}" aria-hidden="true"></i>
+    {{{message}}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="{{#str}}closebuttontitle, core{{/str}}">
+        <span aria-hidden="true">&times;</span>
     </button>
 </div>
