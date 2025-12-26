@@ -157,11 +157,11 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     // Load tenant-specific config.
     if ($forumid) {
         if ($tenantid === null) {
-            $sql = "SELECT * FROM {local_forum_ai_config} 
+            $sql = "SELECT * FROM {local_forum_ai_config}
                     WHERE forumid = :forumid AND tenantid IS NULL";
             $params = ['forumid' => $forumid];
         } else {
-            $sql = "SELECT * FROM {local_forum_ai_config} 
+            $sql = "SELECT * FROM {local_forum_ai_config}
                     WHERE forumid = :forumid AND tenantid = :tenantid";
             $params = [
                 'forumid'  => $forumid,
@@ -346,11 +346,11 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
 
     // Search for existing configuration for this forum and tenant.
     if ($tenantid === null) {
-        $sql = "SELECT * FROM {local_forum_ai_config} 
+        $sql = "SELECT * FROM {local_forum_ai_config}
                 WHERE forumid = :forumid AND tenantid IS NULL";
         $params = ['forumid' => $data->instance];
     } else {
-        $sql = "SELECT * FROM {local_forum_ai_config} 
+        $sql = "SELECT * FROM {local_forum_ai_config}
                 WHERE forumid = :forumid AND tenantid = :tenantid";
         $params = [
             'forumid'  => $data->instance,
@@ -360,7 +360,6 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
 
     $record = $DB->get_record_sql($sql, $params);
 
-    // check for a legacy record with NULL tenant and migrate it.
     if (!$record && $tenantid !== null) {
         $legacyrecord = $DB->get_record('local_forum_ai_config', [
             'forumid' => $data->instance,
