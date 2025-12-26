@@ -184,19 +184,5 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
     }
 
-    if ($oldversion < 2025121203) {
-        // Define field tenantid to be added to local_forum_ai_pending.
-        $table = new xmldb_table('local_forum_ai_pending');
-        $field = new xmldb_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'forumid');
-
-        // Conditionally launch add field tenantid.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121203, 'local', 'forum_ai');
-    }
-
     return true;
 }
