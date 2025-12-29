@@ -1,4 +1,4 @@
-## FORUM AI
+## FORUM AI for Moodle Workplace
 
 The Forum AI plugin integrates artificial intelligence into Moodle’s forum module, transforming discussion spaces into more interactive, dynamic, and efficient environments.
 
@@ -19,6 +19,32 @@ This innovation helps educators save time, encourage meaningful participation, a
 1. Log in to your Moodle site as an administrator and go to Site `Administration > Plugins > Install Plugins`.
 2. Upload the ZIP file with the plugin code. You'll only be prompted to add additional details if the plugin type isn't automatically detected.
 3. Check the plugin validation report and complete the installation.
+
+## Moodle Workplace – Multitenant support
+
+Forum AI is fully compatible with **Moodle Workplace** and is designed to operate correctly in **multitenant environments**.
+
+In Moodle Workplace, multiple organizations (tenants) coexist within a single platform while maintaining strict separation of data, configuration, and operational behavior. Forum AI respects this architecture by ensuring that all AI-related forum configuration is stored and applied **per tenant**.
+
+### Tenant-aware forum configuration
+
+Each tenant manages its own Forum AI configuration independently. This means that:
+
+- AI features can be enabled or disabled per forum and per tenant
+- Changes made by one tenant never affect forums belonging to other tenants
+
+Forum AI automatically adapts its behavior based on the active tenant context, allowing multiple organizations to use the same forum structure while maintaining complete autonomy over AI interactions.
+
+### Data isolation and moderation integrity
+
+To guarantee safe operation in multitenant environments:
+
+- Forum AI configuration is uniquely stored per forum and tenant
+- Pending AI responses and approval workflows respect tenant boundaries
+- AI-generated content is only visible and manageable within its corresponding tenant context
+- Historical AI responses remain fully isolated and traceable per tenant
+
+Forum AI integrates seamlessly into Moodle Workplace, following platform best practices and providing a scalable, predictable, and secure experience for all tenants.
 
 ## Manual installation
 
