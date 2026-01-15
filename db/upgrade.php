@@ -159,7 +159,6 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121201) {
-
         // Define table local_forum_ai_queue to be created.
         $table = new xmldb_table('local_forum_ai_queue');
 
@@ -184,7 +183,6 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121202) {
-
         // Define field usedelay to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('usedelay', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'timemodified');
@@ -199,7 +197,6 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121203) {
-
         // Define field delayminutes to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('delayminutes', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'usedelay');
