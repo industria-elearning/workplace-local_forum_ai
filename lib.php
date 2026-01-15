@@ -136,13 +136,15 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
 
     // Default values.
     $defaults = (object)[
-        'enabled' => 0,
+        'enabled' => 1,
         'require_approval' => 1,
         'reply_message' => get_string('default_reply_message', 'local_forum_ai'),
         'enablediainitconversation' => 0,
         'allowedroles' => [],
         'allowedroles_saved' => false,
         'graderid' => null,
+        'usedelay' => 0,
+        'delayminutes' => 60,
     ];
 
     // Load custom config if exists.
@@ -155,6 +157,8 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         $defaults->enablediainitconversation = $record->enablediainitconversation ?? 0;
         $defaults->graderid = $record->graderid ?? null;
         $defaults->allowedroles_saved = true;
+        $defaults->usedelay = $record->usedelay ?? 0;
+        $defaults->delayminutes = max(1, (int)($record->delayminutes ?? 60));
 
         if (empty($record->allowedroles)) {
             $defaults->allowedroles = [];
@@ -223,6 +227,33 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         [1 => get_string('yes'), 0 => get_string('no')]
     );
     $mform->setDefault('local_forum_ai_require_approval', $defaults->require_approval);
+
+    $mform->addElement(
+        'select',
+        'local_forum_ai_usedelay',
+        get_string('usedelay', 'local_forum_ai'),
+        [0 => get_string('no'), 1 => get_string('yes')]
+    );
+    $mform->addHelpButton('local_forum_ai_usedelay', 'usedelay', 'local_forum_ai');
+    $mform->setDefault('local_forum_ai_usedelay', $defaults->usedelay);
+
+    $mform->addElement(
+        'text',
+        'local_forum_ai_delayminutes',
+        get_string('delayminutes', 'local_forum_ai')
+    );
+    $mform->setType('local_forum_ai_delayminutes', PARAM_INT);
+    $mform->addRule('local_forum_ai_delayminutes', null, 'numeric', null, 'client');
+    $mform->addHelpButton('local_forum_ai_delayminutes', 'delayminutes', 'local_forum_ai');
+    $mform->setDefault('local_forum_ai_delayminutes', $defaults->delayminutes);
+
+    // Hide unless delay enabled.
+    $mform->hideIf('local_forum_ai_usedelay', 'local_forum_ai_enabled', 'neq', 1);
+    $mform->hideIf('local_forum_ai_usedelay', 'local_forum_ai_require_approval', 'eq', 1);
+
+    $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_usedelay', 'neq', 1);
+    $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_enabled', 'neq', 1);
+    $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_require_approval', 'eq', 1);
 
     // Users enrolled who can either rate or grade.
     $eligibleusers = [];
@@ -312,6 +343,8 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     $config->reply_message = $data->local_forum_ai_reply_message ?? '';
     $config->enablediainitconversation = $data->enablediainitconversation ?? 0;
     $config->graderid = $data->local_forum_ai_grader ?? null;
+    $config->usedelay = $data->local_forum_ai_usedelay ?? 0;
+    $config->delayminutes = max(1, (int)($data->local_forum_ai_delayminutes ?? 60));
 
     // Save null if not selected roles.
     if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
