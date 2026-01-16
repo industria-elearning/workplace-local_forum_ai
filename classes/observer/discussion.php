@@ -84,6 +84,25 @@ class discussion {
                 return;
             }
 
+            if (!empty($config->usedelay)) {
+                $delay = max(1, (int) $config->delayminutes);
+                $timetoprocess = time() + ($delay * 60);
+
+                $taskdata = new \stdClass();
+                $taskdata->discussionid = $discussionid;
+                $taskdata->cmid = $cm->id;
+
+                $DB->insert_record('local_forum_ai_queue', (object) [
+                    'type' => 'discussion',
+                    'payload' => json_encode($taskdata),
+                    'timecreated' => time(),
+                    'timetoprocess' => $timetoprocess,
+                    'processed' => 0,
+                ]);
+
+                return;
+            }
+
             // Prepare data for ad-hoc task.
             $taskdata = new \stdClass();
             $taskdata->discussionid = $discussionid;
@@ -97,13 +116,11 @@ class discussion {
 
             \core\task\manager::queue_adhoc_task($task);
         } catch (\dml_missing_record_exception $e) {
-            // Required record not found, log and skip.
             debugging(
                 'Missing record in process_discussion: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
             );
         } catch (\Throwable $e) {
-            // General error occurred.
             debugging(
                 'Error processing discussion for AI: ' . $e->getMessage(),
                 DEBUG_DEVELOPER

@@ -49,18 +49,35 @@ class post {
             // Get course module.
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-            // Prepare data for ad-hoc task.
-            $taskdata = new \stdClass();
-            $taskdata->postid = $postid;
-            $taskdata->cmid = $cm->id;
+            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
 
-            // Create and queue the ad-hoc task.
-            $task = new process_ai_post();
-            $task->set_custom_data($taskdata);
-            $task->set_component('local_forum_ai');
-            $task->set_userid($post->userid);
+            if (!$config || empty($config->enabled)) {
+                return true;
+            }
 
-            \core\task\manager::queue_adhoc_task($task);
+            $taskdata = (object)[
+                'postid' => $postid,
+                'cmid' => $cm->id,
+            ];
+
+            if (!empty($config->usedelay)) {
+                $delay = max(1, (int)$config->delayminutes);
+                $timetoprocess = time() + ($delay * 60);
+
+                $DB->insert_record('local_forum_ai_queue', (object)[
+                    'type' => 'post',
+                    'payload' => json_encode($taskdata),
+                    'timecreated' => time(),
+                    'timetoprocess' => $timetoprocess,
+                    'processed' => 0,
+                ]);
+            } else {
+                $task = new process_ai_post();
+                $task->set_custom_data($taskdata);
+                $task->set_component('local_forum_ai');
+                $task->set_userid($post->userid);
+                \core\task\manager::queue_adhoc_task($task);
+            }
 
             return true;
         } catch (\Throwable $e) {
