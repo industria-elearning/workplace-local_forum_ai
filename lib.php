@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Forum AI plugin configuration.
+ * Forum AI plugin configuration and hooks.
  *
  * @package    local_forum_ai
  * @category   admin
@@ -26,11 +26,14 @@
 /**
  * Extends the settings navigation (the "More" menu in forum activities).
  *
- * @param settings_navigation $nav
- * @param context $context
+ * Adds links to pending and history pages for AI responses in forum module settings.
+ *
+ * @param settings_navigation $nav The settings navigation object
+ * @param context $context The current context
+ * @return void
  */
 function local_forum_ai_extend_settings_navigation(settings_navigation $nav, context $context) {
-    global $PAGE, $DB, $USER;
+    global $PAGE, $USER;
 
     // Only apply in forum module contexts.
     if ($context->contextlevel != CONTEXT_MODULE || $PAGE->cm->modname !== 'forum') {
@@ -79,43 +82,50 @@ function local_forum_ai_extend_settings_navigation(settings_navigation $nav, con
 /**
  * Extends the course navigation tree (left-hand side menu).
  *
- * @param navigation_node $navigation
- * @param stdClass $course
- * @param stdClass $context
+ * Adds links to pending and history pages for AI responses in course navigation.
+ *
+ * @param navigation_node $navigation The navigation node object
+ * @param stdClass $course The course object
+ * @param stdClass $context The course context
+ * @return void
  */
 function local_forum_ai_extend_navigation_course($navigation, $course, $context) {
     global $USER;
 
     // Only display if the user has the approveresponses capability.
-    if (has_capability('local/forum_ai:approveresponses', $context, $USER)) {
-        $pendingurl = new moodle_url('/local/forum_ai/pending.php', ['courseid' => $course->id]);
-        $historyurl = new moodle_url('/local/forum_ai/history.php', ['courseid' => $course->id]);
-
-        $navigation->add(
-            get_string('pendingresponses', 'local_forum_ai'),
-            $pendingurl,
-            navigation_node::TYPE_SETTING,
-            null,
-            'forum_ai_pending',
-            new pix_icon('i/warning', '')
-        );
-
-        $navigation->add(
-            get_string('historyresponses', 'local_forum_ai'),
-            $historyurl,
-            navigation_node::TYPE_SETTING,
-            null,
-            'forum_ai_history',
-            new pix_icon('i/log', '')
-        );
+    if (!has_capability('local/forum_ai:approveresponses', $context, $USER)) {
+        return;
     }
+
+    $pendingurl = new moodle_url('/local/forum_ai/pending.php', ['courseid' => $course->id]);
+    $historyurl = new moodle_url('/local/forum_ai/history.php', ['courseid' => $course->id]);
+
+    $navigation->add(
+        get_string('pendingresponses', 'local_forum_ai'),
+        $pendingurl,
+        navigation_node::TYPE_SETTING,
+        null,
+        'forum_ai_pending',
+        new pix_icon('i/warning', '')
+    );
+
+    $navigation->add(
+        get_string('historyresponses', 'local_forum_ai'),
+        $historyurl,
+        navigation_node::TYPE_SETTING,
+        null,
+        'forum_ai_history',
+        new pix_icon('i/log', '')
+    );
 }
 
 /**
  * Extends the forum module edit form with AI-related fields.
  *
- * @param mod_forum_mod_form $formwrapper
- * @param MoodleQuickForm $mform
+ *
+ * @param mod_forum_mod_form $formwrapper The forum module form wrapper
+ * @param MoodleQuickForm $mform The Moodle quick form object
+ * @return void
  */
 function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     global $DB, $USER;
@@ -128,13 +138,12 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     $cm = $formwrapper->get_current();
     $forumid = $cm->instance ?? null;
     $context = context_course::instance($cm->course);
+    $tenantid = \tool_tenant\tenancy::get_tenant_id();
 
-    // Only users with capability to configure AI for forum can see settings.
     if (!has_capability('local/forum_ai:approveresponses', $context, $USER)) {
         return;
     }
 
-    // Default values.
     $defaults = (object)[
         'enabled' => 0,
         'require_approval' => 1,
@@ -145,26 +154,49 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         'graderid' => null,
     ];
 
-    // Load custom config if exists.
-    if ($forumid && $DB->record_exists('local_forum_ai_config', ['forumid' => $forumid])) {
-        $record = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
-
-        $defaults->enabled = $record->enabled;
-        $defaults->require_approval = $record->require_approval;
-        $defaults->reply_message = $record->reply_message;
-        $defaults->enablediainitconversation = $record->enablediainitconversation ?? 0;
-        $defaults->graderid = $record->graderid ?? null;
-        $defaults->allowedroles_saved = true;
-
-        if (empty($record->allowedroles)) {
-            $defaults->allowedroles = [];
+    // Load tenant-specific config.
+    if ($forumid) {
+        if ($tenantid === null) {
+            $sql = "SELECT * FROM {local_forum_ai_config}
+                    WHERE forumid = :forumid AND tenantid IS NULL";
+            $params = ['forumid' => $forumid];
         } else {
-            $defaults->allowedroles = explode(',', $record->allowedroles);
+            $sql = "SELECT * FROM {local_forum_ai_config}
+                    WHERE forumid = :forumid AND tenantid = :tenantid";
+            $params = [
+                'forumid'  => $forumid,
+                'tenantid' => $tenantid,
+            ];
+        }
+
+        $record = $DB->get_record_sql($sql, $params);
+
+        if (!$record && $tenantid !== null) {
+            $record = $DB->get_record('local_forum_ai_config', [
+                'forumid' => $forumid,
+                'tenantid' => null,
+            ]);
+        }
+
+        if ($record) {
+            $defaults->enabled = (int)$record->enabled;
+            $defaults->require_approval = (int)$record->require_approval;
+            $defaults->reply_message = $record->reply_message;
+            $defaults->enablediainitconversation = (int)($record->enablediainitconversation ?? 0);
+            $defaults->graderid = $record->graderid ?? null;
+            $defaults->allowedroles_saved = true;
+
+            if (!empty($record->allowedroles)) {
+                $defaults->allowedroles = explode(',', $record->allowedroles);
+            }
         }
     }
 
-    // Header.
-    $mform->addElement('header', 'local_forum_ai_header', get_string('datacurso_custom', 'local_forum_ai'));
+    $mform->addElement(
+        'header',
+        'local_forum_ai_header',
+        get_string('datacurso_custom', 'local_forum_ai')
+    );
 
     // Enabled AI.
     $mform->addElement(
@@ -176,12 +208,21 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     $mform->setDefault('local_forum_ai_enabled', $defaults->enabled);
 
     // Enable AI init conversation.
-    $mform->addElement('select', 'enablediainitconversation', get_string('enablediainitconversation', 'local_forum_ai'), [
-        0 => get_string('no', 'local_forum_ai'),
-        1 => get_string('yes', 'local_forum_ai'),
-    ]);
+    $mform->addElement(
+        'select',
+        'enablediainitconversation',
+        get_string('enablediainitconversation', 'local_forum_ai'),
+        [
+            0 => get_string('no', 'local_forum_ai'),
+            1 => get_string('yes', 'local_forum_ai'),
+        ]
+    );
     $mform->setType('enablediainitconversation', PARAM_INT);
-    $mform->addHelpButton('enablediainitconversation', 'enablediainitconversation', 'local_forum_ai');
+    $mform->addHelpButton(
+        'enablediainitconversation',
+        'enablediainitconversation',
+        'local_forum_ai'
+    );
     $mform->setDefault('enablediainitconversation', $defaults->enablediainitconversation);
 
     // Roles allowed to trigger AI.
@@ -208,12 +249,10 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     );
     $mform->setType('allowedroles', PARAM_RAW);
     $mform->addHelpButton('allowedroles', 'allowedroles', 'local_forum_ai');
-
-    if ($defaults->allowedroles_saved) {
-        $mform->setDefault('allowedroles', $defaults->allowedroles);
-    } else {
-        $mform->setDefault('allowedroles', $defaultroles);
-    }
+    $mform->setDefault(
+        'allowedroles',
+        $defaults->allowedroles_saved ? $defaults->allowedroles : $defaultroles
+    );
 
     // Require approval.
     $mform->addElement(
@@ -227,24 +266,24 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     // Users enrolled who can either rate or grade.
     $eligibleusers = [];
 
-    // Users with mod/forum:rate.
-    $rators = get_enrolled_users($context, 'mod/forum:rate');
-    foreach ($rators as $u) {
+    // Get users with forum rating capability.
+    $raters = get_enrolled_users($context, 'mod/forum:rate');
+    foreach ($raters as $u) {
         $eligibleusers[$u->id] = fullname($u);
     }
 
-    // Users with mod/forum:grade.
+    // Get users with forum grading capability.
     $graders = get_enrolled_users($context, 'mod/forum:grade');
     foreach ($graders as $u) {
         $eligibleusers[$u->id] = fullname($u);
     }
 
-    // Sort list.
+    // Sort alphabetically.
     if (!empty($eligibleusers)) {
         \core_collator::asort($eligibleusers);
     }
 
-    // Ensure saved grader appears even if not enrolled (past config).
+    // Ensure saved grader appears even if not currently enrolled.
     if ($defaults->graderid && !isset($eligibleusers[$defaults->graderid])) {
         $saveduser = $DB->get_record(
             'user',
@@ -263,7 +302,6 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         $eligibleusers,
         [
             'multiple' => false,
-            'tags' => false,
             'maxitems' => 1,
             'noselectionstring' => get_string('none'),
         ]
@@ -275,7 +313,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         $mform->setDefault('local_forum_ai_grader', (int)$defaults->graderid);
     }
 
-    // Hide unless AI is enabled.
+    // Hide grader field unless AI is enabled.
     $mform->hideIf('local_forum_ai_grader', 'local_forum_ai_enabled', 'neq', 1);
 
     // Reply AI template.
@@ -292,9 +330,10 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
 /**
  * Saves or updates forum AI configuration when editing a forum.
  *
- * @param stdClass $data
- * @param stdClass $course
- * @return stdClass
+ *
+ * @param stdClass $data The form data submitted
+ * @param stdClass $course The course object
+ * @return stdClass The original data object (unchanged)
  */
 function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     global $DB;
@@ -303,17 +342,49 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
         return $data;
     }
 
-    $record = $DB->get_record('local_forum_ai_config', ['forumid' => $data->instance]);
+    $tenantid = \tool_tenant\tenancy::get_tenant_id();
 
+    // Search for existing configuration for this forum and tenant.
+    if ($tenantid === null) {
+        $sql = "SELECT * FROM {local_forum_ai_config}
+                WHERE forumid = :forumid AND tenantid IS NULL";
+        $params = ['forumid' => $data->instance];
+    } else {
+        $sql = "SELECT * FROM {local_forum_ai_config}
+                WHERE forumid = :forumid AND tenantid = :tenantid";
+        $params = [
+            'forumid'  => $data->instance,
+            'tenantid' => $tenantid,
+        ];
+    }
+
+    $record = $DB->get_record_sql($sql, $params);
+
+    if (!$record && $tenantid !== null) {
+        $legacyrecord = $DB->get_record('local_forum_ai_config', [
+            'forumid' => $data->instance,
+            'tenantid' => null,
+        ]);
+
+        if ($legacyrecord) {
+            $legacyrecord->tenantid = $tenantid;
+            $legacyrecord->timemodified = time();
+            $DB->update_record('local_forum_ai_config', $legacyrecord);
+            $record = $legacyrecord;
+        }
+    }
+
+    // Prepare configuration data.
     $config = new stdClass();
     $config->forumid = $data->instance;
+    $config->tenantid = $tenantid;
     $config->enabled = $data->local_forum_ai_enabled ?? 0;
     $config->require_approval = $data->local_forum_ai_require_approval ?? 1;
     $config->reply_message = $data->local_forum_ai_reply_message ?? '';
     $config->enablediainitconversation = $data->enablediainitconversation ?? 0;
     $config->graderid = $data->local_forum_ai_grader ?? null;
 
-    // Save null if not selected roles.
+    // Process allowed roles.
     if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
         $config->allowedroles = implode(',', $data->allowedroles);
     } else {
@@ -322,6 +393,7 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
 
     $config->timemodified = time();
 
+    // Update existing record or insert new one.
     if ($record) {
         $config->id = $record->id;
         $DB->update_record('local_forum_ai_config', $config);
