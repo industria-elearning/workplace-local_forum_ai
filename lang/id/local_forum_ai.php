@@ -142,6 +142,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Disetujui';
 $string['statuspending'] = 'Menunggu';
 $string['statusrejected'] = 'Ditolak';
+$string['task_process_ai_queue'] = 'Proses antrean tertunda Forum AI';
 $string['task_process_single_forum_discussion'] = 'Memproses satu forum diskusi untuk AI';
 $string['usedelay'] = 'Gunakan peninjauan tertunda';
 $string['usedelay_help'] = 'Jika diaktifkan, peninjauan AI akan dijalankan setelah waktu tunggu yang dapat dikonfigurasi, bukan dijalankan segera.';

@@ -142,6 +142,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Genehmigt';
 $string['statuspending'] = 'Ausstehend';
 $string['statusrejected'] = 'Abgelehnt';
+$string['task_process_ai_queue'] = 'Verzögerte Warteschlange von Forum AI verarbeiten';
 $string['task_process_single_forum_discussion'] = 'Ein einzelnes Diskussionsforum für KI verarbeiten';
 $string['usedelay'] = 'Verzögerte Überprüfung verwenden';
 $string['usedelay_help'] = 'Wenn aktiviert, wird die KI-Überprüfung nach einer konfigurierbaren Wartezeit ausgeführt, anstatt sofort zu starten.';

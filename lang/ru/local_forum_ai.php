@@ -142,6 +142,7 @@ $string['status'] = 'Статус';
 $string['statusapproved'] = 'Одобрено';
 $string['statuspending'] = 'Ожидает';
 $string['statusrejected'] = 'Отклонено';
+$string['task_process_ai_queue'] = 'Обработать отложенную очередь Forum AI';
 $string['task_process_single_forum_discussion'] = 'Обработать один форум обсуждений для ИИ';
 $string['usedelay'] = 'Использовать отложенную проверку';
 $string['usedelay_help'] = 'Если включено, проверка с помощью ИИ будет выполнена после настраиваемой задержки, а не сразу.';

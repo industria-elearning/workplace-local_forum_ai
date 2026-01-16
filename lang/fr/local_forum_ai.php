@@ -142,6 +142,7 @@ $string['status'] = 'Statut';
 $string['statusapproved'] = 'Approuvé';
 $string['statuspending'] = 'En attente';
 $string['statusrejected'] = 'Rejeté';
+$string['task_process_ai_queue'] = 'Traiter la file d’attente différée de Forum AI';
 $string['task_process_single_forum_discussion'] = 'Traiter un seul forum de discussion pour l\'IA';
 $string['usedelay'] = 'Utiliser une révision différée';
 $string['usedelay_help'] = 'Si activé, la révision par IA sera exécutée après un délai configurable au lieu d’être exécutée immédiatement.';

@@ -142,6 +142,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Aprovado';
 $string['statuspending'] = 'Pendente';
 $string['statusrejected'] = 'Rejeitado';
+$string['task_process_ai_queue'] = 'Processar fila adiada do Forum AI';
 $string['task_process_single_forum_discussion'] = 'Processar um único fórum de discussão para IA';
 $string['usedelay'] = 'Usar revisão atrasada';
 $string['usedelay_help'] = 'Se ativado, a revisão com IA será executada após um tempo de espera configurável, em vez de ser executada imediatamente.';

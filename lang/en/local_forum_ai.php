@@ -143,6 +143,7 @@ $string['status'] = 'Status';
 $string['statusapproved'] = 'Approved';
 $string['statuspending'] = 'Pending';
 $string['statusrejected'] = 'Rejected';
+$string['task_process_ai_queue'] = 'Process delayed Forum AI queue';
 $string['task_process_single_forum_discussion'] = 'Process single forum discussion for AI';
 $string['usedelay'] = 'Use delayed review';
 $string['usedelay_help'] = 'If enabled, AI review will be executed after a configurable delay instead of immediately.';
