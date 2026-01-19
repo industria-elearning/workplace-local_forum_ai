@@ -55,16 +55,16 @@ class post {
                 return true;
             }
 
-            $taskdata = (object)[
+            $taskdata = (object) [
                 'postid' => $postid,
                 'cmid' => $cm->id,
             ];
 
             if (!empty($config->usedelay)) {
-                $delay = max(1, (int)$config->delayminutes);
+                $delay = max(1, (int) $config->delayminutes);
                 $timetoprocess = time() + ($delay * 60);
 
-                $DB->insert_record('local_forum_ai_queue', (object)[
+                $DB->insert_record('local_forum_ai_queue', (object) [
                     'type' => 'post',
                     'payload' => json_encode($taskdata),
                     'timecreated' => time(),
@@ -95,8 +95,23 @@ class post {
     public static function post_deleted(post_deleted $event): void {
         global $DB;
 
-        $postid = $event->objectid;
+        $postid = (int) $event->objectid;
 
         $DB->delete_records('local_forum_ai_pending', ['parentpostid' => $postid]);
+
+        $like1 = '%"postid":' . $postid . '%';
+        $like2 = '%"postid":"' . $postid . '"%';
+
+        $sql = "DELETE FROM {local_forum_ai_queue}
+            WHERE type = :type
+              AND (payload LIKE :like1 OR payload LIKE :like2)";
+
+        $params = [
+            'type' => 'post',
+            'like1' => $like1,
+            'like2' => $like2,
+        ];
+
+        $DB->execute($sql, $params);
     }
 }

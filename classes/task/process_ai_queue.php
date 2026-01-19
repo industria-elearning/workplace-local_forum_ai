@@ -16,8 +16,6 @@
 
 namespace local_forum_ai\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_forum_ai\task\process_ai_post;
 use local_forum_ai\task\process_ai_discussion;
 

@@ -139,16 +139,23 @@ class discussion {
     public static function discussion_deleted(discussion_deleted $event): void {
         global $DB;
 
-        try {
-            $discussionid = $event->objectid;
+        $discussionid = (int) $event->objectid;
 
-            // Clean up pending AI processing records.
-            $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
-        } catch (\Throwable $e) {
-            debugging(
-                'Error in discussion_deleted observer: ' . $e->getMessage(),
-                DEBUG_DEVELOPER
-            );
-        }
+        $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+
+        $like1 = '%"discussionid":' . $discussionid . '%';
+        $like2 = '%"discussionid":"' . $discussionid . '"%';
+
+        $sql = "DELETE FROM {local_forum_ai_queue}
+            WHERE type = :type
+              AND (payload LIKE :like1 OR payload LIKE :like2)";
+
+        $params = [
+            'type' => 'discussion',
+            'like1' => $like1,
+            'like2' => $like2,
+        ];
+
+        $DB->execute($sql, $params);
     }
 }
