@@ -34,9 +34,9 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
-    local_forum_ai_userlist,
+    \core_privacy\local\metadata\provider,
     \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\metadata\provider {
+    local_forum_ai_userlist {
     /**
      * Describe the types of personal data stored by this plugin.
      *

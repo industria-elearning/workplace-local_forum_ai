@@ -38,6 +38,7 @@ class approval {
      * @param string $status The approval status ('pending' or 'approved'). Defaults to 'pending'.
      * @param int|null $parentpostid The ID of the parent post to reply to, or null if top-level.
      * @param int|null $grade AI-generated grade, if applicable.
+     * @param int|null $creatoruserid User ID to attribute as creator in pending/history.
      * @return void
      */
     public static function create_approval_request(
@@ -46,7 +47,8 @@ class approval {
         string $message,
         string $status = 'pending',
         ?int $parentpostid = null,
-        ?int $grade = null
+        ?int $grade = null,
+        ?int $creatoruserid = null
     ): void {
         global $DB;
 
@@ -56,7 +58,7 @@ class approval {
             $pending = new \stdClass();
             $pending->discussionid = $discussion->id;
             $pending->forumid = $forum->id;
-            $pending->creator_userid = $discussion->userid;
+            $pending->creator_userid = $creatoruserid ?? $discussion->userid;
             $pending->subject = "Re: " . $discussion->name;
             $pending->message = $message;
             $pending->status = $status;
