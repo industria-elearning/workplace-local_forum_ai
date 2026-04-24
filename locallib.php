@@ -108,39 +108,6 @@ function local_forum_ai_get_history(int $courseid, int $forumid = 0) {
 }
 
 /**
- * Returns the teachers (users with editingteacher role) of a course.
- *
- * @package local_forum_ai
- * @param int $courseid Course ID.
- * @param bool $single Whether to return only one.
- * @return \stdClass|array|null
- */
-function local_forum_ai_get_editingteachers(int $courseid, bool $single = false) {
-    global $DB;
-
-    $context = \context_course::instance($courseid);
-
-    $sql = "SELECT u.*
-              FROM {role_assignments} ra
-              JOIN {user} u ON u.id = ra.userid
-              JOIN {role} r ON r.id = ra.roleid
-             WHERE ra.contextid = :contextid
-               AND r.shortname = :rolename
-             ORDER BY ra.id ASC";
-
-    $params = [
-        'contextid' => $context->id,
-        'rolename' => 'editingteacher',
-    ];
-
-    if ($single) {
-        return $DB->get_record_sql($sql . " LIMIT 1", $params);
-    } else {
-        return $DB->get_records_sql($sql, $params);
-    }
-}
-
-/**
  * Cleans pending AI responses from expired forums.
  *
  * @return int Number of deleted records.
