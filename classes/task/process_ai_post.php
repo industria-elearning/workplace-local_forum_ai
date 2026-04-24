@@ -143,7 +143,8 @@ class process_ai_post extends adhoc_task {
                 $replytext,
                 $requireapproval ? 'pending' : 'approved',
                 $post->id,
-                $grade
+                $grade,
+                $post->userid
             );
 
             if (!$requireapproval) {
