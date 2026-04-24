@@ -120,7 +120,7 @@ class utils {
         }
 
         $participation = [
-            'userid' => $userid,
+            'userid' => (string)$userid,
             'participation' => [
                 'forum_id' => (string)$forum->id,
                 'forum' => $forum->name,

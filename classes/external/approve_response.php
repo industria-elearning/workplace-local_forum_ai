@@ -60,7 +60,7 @@ class approve_response extends external_api {
      * @throws moodle_exception If the validations or permissions are not met
      */
     public static function execute($token, $action) {
-        global $DB, $CFG;
+        global $DB, $CFG, $USER;
 
         $params = self::validate_parameters(self::execute_parameters(), [
             'token'  => $token,
@@ -86,12 +86,6 @@ class approve_response extends external_api {
         if ($params['action'] === 'approve') {
             require_once($CFG->dirroot . '/mod/forum/lib.php');
 
-            $teacher = \local_forum_ai_get_editingteachers($course->id, true);
-
-            if (!$teacher) {
-                throw new moodle_exception('noteachersfound', 'local_forum_ai');
-            }
-
             // Determine the correct parent post based on parentpostid.
             $parentid = $discussion->firstpost;
 
@@ -116,7 +110,8 @@ class approve_response extends external_api {
             $post = new \stdClass();
             $post->discussion    = $discussion->id;
             $post->parent        = $parentid;
-            $post->userid        = $teacher->id;
+            // In manual mode, attribute the AI response to the user who approved it.
+            $post->userid        = $USER->id;
             $post->created       = time();
             $post->modified      = time();
             $post->subject       = $pending->subject ?: ("Re: " . $discussion->name);
@@ -130,34 +125,29 @@ class approve_response extends external_api {
 
             if ($gradingenabled && !empty($pending->grade) && !empty($pending->parentpostid)) {
                 try {
-                    // Load plugin configuration to get grader user.
-                    $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
-                    $graderid = $config->graderid ?? null;
+                    // In manual mode, attribute grading to the user who approved it.
+                    $graderid = $USER->id;
 
-                    if (!$graderid) {
-                        debugging('No grader configured for AI ratings in forum ' . $forum->id, DEBUG_DEVELOPER);
-                    } else {
-                        // Get the original post that was graded.
-                        $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
+                    // Get the original post that was graded.
+                    $originalpost = $DB->get_record('forum_posts', ['id' => $pending->parentpostid]);
 
-                        if ($originalpost) {
-                            // Use custom function to add rating without modifying global $USER.
-                            $result = local_forum_ai_add_rating(
-                                $cm,
-                                $context,
-                                'mod_forum',
-                                'post',
-                                $pending->parentpostid,
-                                $forum->scale,
-                                $pending->grade,
-                                $originalpost->userid,
-                                $forum->assessed,
-                                $graderid
-                            );
+                    if ($originalpost) {
+                        // Use custom function to add rating without modifying global $USER.
+                        $result = local_forum_ai_add_rating(
+                            $cm,
+                            $context,
+                            'mod_forum',
+                            'post',
+                            $pending->parentpostid,
+                            $forum->scale,
+                            $pending->grade,
+                            $originalpost->userid,
+                            $forum->assessed,
+                            $graderid
+                        );
 
-                            if (!empty($result->error)) {
-                                debugging('Error adding AI rating on manual approval: ' . $result->error, DEBUG_DEVELOPER);
-                            }
+                        if (!empty($result->error)) {
+                            debugging('Error adding AI rating on manual approval: ' . $result->error, DEBUG_DEVELOPER);
                         }
                     }
                 } catch (\Exception $e) {
@@ -166,11 +156,13 @@ class approve_response extends external_api {
             }
 
             $pending->status       = 'approved';
+            $pending->creator_userid = $USER->id;
             $pending->approved_at  = time();
             $pending->timemodified = time();
             $DB->update_record('local_forum_ai_pending', $pending);
         } else if ($params['action'] === 'reject') {
             $pending->status       = 'rejected';
+            $pending->creator_userid = $USER->id;
             $pending->timemodified = time();
             $DB->update_record('local_forum_ai_pending', $pending);
         } else {

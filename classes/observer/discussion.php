@@ -84,7 +84,10 @@ class discussion {
                 return;
             }
 
-            if (!empty($config->usedelay)) {
+            $requireapproval = (int)($config->require_approval ?? 1);
+
+            // Delayed review settings only apply when approvals are automatic.
+            if ($requireapproval === 0 && !empty($config->usedelay)) {
                 $delay = max(1, (int) $config->delayminutes);
                 $timetoprocess = time() + ($delay * 60);
 

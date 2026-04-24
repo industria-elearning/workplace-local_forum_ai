@@ -308,6 +308,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
 
     // Hide unless AI is enabled.
     $mform->hideIf('local_forum_ai_grader', 'local_forum_ai_enabled', 'neq', 1);
+    $mform->hideIf('local_forum_ai_grader', 'local_forum_ai_require_approval', 'eq', 1);
 
     // Reply AI template.
     $mform->addElement(
