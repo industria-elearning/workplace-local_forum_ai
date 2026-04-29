@@ -38,6 +38,7 @@ class approval {
      * @param string $status The approval status ('pending' or 'approved'). Defaults to 'pending'.
      * @param int|null $parentpostid The ID of the parent post to reply to, or null if top-level.
      * @param int|null $grade AI-generated grade, if applicable.
+     * @param int|null $creatoruserid User ID to attribute as creator in pending/history.
      * @return void
      */
     public static function create_approval_request(
@@ -46,7 +47,8 @@ class approval {
         string $message,
         string $status = 'pending',
         ?int $parentpostid = null,
-        ?int $grade = null
+        ?int $grade = null,
+        ?int $creatoruserid = null
     ): void {
         global $DB;
 
@@ -56,7 +58,7 @@ class approval {
             $pending = new \stdClass();
             $pending->discussionid = $discussion->id;
             $pending->forumid = $forum->id;
-            $pending->creator_userid = $discussion->userid;
+            $pending->creator_userid = $creatoruserid ?? $discussion->userid;
             $pending->subject = "Re: " . $discussion->name;
             $pending->message = $message;
             $pending->status = $status;
@@ -201,21 +203,19 @@ class approval {
      * @param object $discussion The discussion object.
      * @param string $message The AI-generated message content.
      * @param int $parentpostid The ID of the parent post to reply to.
+     * @param int $authoruserid User ID to use as reply author.
      * @return bool True on success, false on failure.
      */
-    public static function create_ai_reply($discussion, string $message, int $parentpostid): bool {
+    public static function create_ai_reply($discussion, string $message, int $parentpostid, int $authoruserid): bool {
         global $DB;
 
         try {
-            $course = $DB->get_record('course', ['id' => $discussion->course], '*', MUST_EXIST);
-            $teachers = \local_forum_ai_get_editingteachers($course->id);
+            $author = $DB->get_record('user', ['id' => $authoruserid]);
 
-            if (empty($teachers)) {
-                debugging('No teachers found to create AI reply', DEBUG_DEVELOPER);
+            if (!$author) {
+                debugging('Configured author user not found for AI reply: ' . $authoruserid, DEBUG_DEVELOPER);
                 return false;
             }
-
-            $teacher = reset($teachers);
 
             // Verify that the parentpostid exists and belongs to this discussion.
             $parentpost = $DB->get_record('forum_posts', [
@@ -235,7 +235,7 @@ class approval {
             $post = new \stdClass();
             $post->discussion = $discussion->id;
             $post->parent = $parentpostid;
-            $post->userid = $teacher->id;
+            $post->userid = $author->id;
             $post->created = time();
             $post->modified = time();
             $post->subject = "Re: " . $discussion->name;

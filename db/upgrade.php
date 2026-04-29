@@ -159,13 +159,23 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121201) {
-        // Define field tenantid to be added to local_forum_ai_config.
-        $table = new xmldb_table('local_forum_ai_config');
-        $field = new xmldb_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'forumid');
+        // Define table local_forum_ai_queue to be created.
+        $table = new xmldb_table('local_forum_ai_queue');
 
-        // Conditionally launch add field tenantid.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
+        // Adding fields to table local_forum_ai_queue.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('payload', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timetoprocess', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('processed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_forum_ai_queue.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_forum_ai_queue.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
         }
 
         // Forum_ai savepoint reached.
@@ -173,15 +183,31 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121202) {
-        // Define key forum_tenant_unique (unique) to be added to local_forum_ai_config.
+        // Define field usedelay to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
-        $key = new xmldb_key('forum_tenant_unique', XMLDB_KEY_UNIQUE, ['forumid', 'tenantid']);
+        $field = new xmldb_field('usedelay', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'timemodified');
 
-        // Launch add key forum_tenant_unique.
-        $dbman->add_key($table, $key);
+        // Conditionally launch add field usedelay.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
 
         // Forum_ai savepoint reached.
         upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
+    }
+
+    if ($oldversion < 2025121203) {
+        // Define field delayminutes to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('delayminutes', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'usedelay');
+
+        // Conditionally launch add field delayminutes.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025121203, 'local', 'forum_ai');
     }
 
     return true;

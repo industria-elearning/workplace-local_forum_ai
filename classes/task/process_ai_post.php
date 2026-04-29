@@ -71,6 +71,12 @@ class process_ai_post extends adhoc_task {
             $requireapproval = $config->require_approval ?? 1;
             $allowedroles = $config->allowedroles ?? '';
             $graderid = $config->graderid ?? null;
+            $effectivegraderid = !$requireapproval ? $graderid : null;
+
+            if (!$requireapproval && !$effectivegraderid) {
+                debugging('Automatic approval requires a configured grader in forum ' . $forum->id, DEBUG_DEVELOPER);
+                $requireapproval = 1;
+            }
 
             if (!$enabled) {
                 return;
@@ -98,7 +104,8 @@ class process_ai_post extends adhoc_task {
                     'subject' => $post->subject,
                     'message' => $postmessage,
                 ],
-                'userid' => $graderid ?? 2,
+                // Only consider configured auto-grader in automatic approval mode.
+                'userid' => (string)($effectivegraderid ?? 2),
                 'prompt' => $replymessage,
                 'grading_enabled' => $gradingenabled,
                 'scale' => $gradingenabled ? $forum->scale : null,
@@ -108,7 +115,7 @@ class process_ai_post extends adhoc_task {
             $replytext = $airesponse['reply'] ?? '';
             $grade = $gradingenabled ? ($airesponse['grade'] ?? null) : null;
 
-            if (!$requireapproval && $gradingenabled && $grade !== null && $graderid) {
+            if (!$requireapproval && $gradingenabled && $grade !== null && $effectivegraderid) {
                 $context = \context_module::instance($data->cmid);
                 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
@@ -124,7 +131,7 @@ class process_ai_post extends adhoc_task {
                         $grade,
                         $post->userid,
                         $forum->assessed,
-                        $graderid
+                        $effectivegraderid
                     );
 
                     if (!empty($result->error)) {
@@ -133,7 +140,7 @@ class process_ai_post extends adhoc_task {
                 } catch (\Exception $e) {
                     debugging('Exception adding AI rating: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 }
-            } else if (!$requireapproval && $gradingenabled && $grade !== null && !$graderid) {
+            } else if (!$requireapproval && $gradingenabled && $grade !== null && !$effectivegraderid) {
                 debugging('Grading enabled but no grader configured for forum ' . $forum->id, DEBUG_DEVELOPER);
             }
 
@@ -143,11 +150,12 @@ class process_ai_post extends adhoc_task {
                 $replytext,
                 $requireapproval ? 'pending' : 'approved',
                 $post->id,
-                $grade
+                $grade,
+                (!$requireapproval && $effectivegraderid) ? $effectivegraderid : $post->userid
             );
 
             if (!$requireapproval) {
-                approval::create_ai_reply($discussion, $replytext, $post->id);
+                approval::create_ai_reply($discussion, $replytext, $post->id, $effectivegraderid);
             }
         } catch (\Throwable $e) {
             debugging('Error in process_ai_post task: ' . $e->getMessage(), DEBUG_DEVELOPER);

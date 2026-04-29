@@ -84,6 +84,28 @@ class discussion {
                 return;
             }
 
+            $requireapproval = (int)($config->require_approval ?? 1);
+
+            // Delayed review settings only apply when approvals are automatic.
+            if ($requireapproval === 0 && !empty($config->usedelay)) {
+                $delay = max(1, (int) $config->delayminutes);
+                $timetoprocess = time() + ($delay * 60);
+
+                $taskdata = new \stdClass();
+                $taskdata->discussionid = $discussionid;
+                $taskdata->cmid = $cm->id;
+
+                $DB->insert_record('local_forum_ai_queue', (object) [
+                    'type' => 'discussion',
+                    'payload' => json_encode($taskdata),
+                    'timecreated' => time(),
+                    'timetoprocess' => $timetoprocess,
+                    'processed' => 0,
+                ]);
+
+                return;
+            }
+
             // Prepare data for ad-hoc task.
             $taskdata = new \stdClass();
             $taskdata->discussionid = $discussionid;
@@ -97,13 +119,11 @@ class discussion {
 
             \core\task\manager::queue_adhoc_task($task);
         } catch (\dml_missing_record_exception $e) {
-            // Required record not found, log and skip.
             debugging(
                 'Missing record in process_discussion: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
             );
         } catch (\Throwable $e) {
-            // General error occurred.
             debugging(
                 'Error processing discussion for AI: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
@@ -122,16 +142,23 @@ class discussion {
     public static function discussion_deleted(discussion_deleted $event): void {
         global $DB;
 
-        try {
-            $discussionid = $event->objectid;
+        $discussionid = (int) $event->objectid;
 
-            // Clean up pending AI processing records.
-            $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
-        } catch (\Throwable $e) {
-            debugging(
-                'Error in discussion_deleted observer: ' . $e->getMessage(),
-                DEBUG_DEVELOPER
-            );
-        }
+        $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+
+        $like1 = '%"discussionid":' . $discussionid . '%';
+        $like2 = '%"discussionid":"' . $discussionid . '"%';
+
+        $sql = "DELETE FROM {local_forum_ai_queue}
+            WHERE type = :type
+              AND (payload LIKE :like1 OR payload LIKE :like2)";
+
+        $params = [
+            'type' => 'discussion',
+            'like1' => $like1,
+            'like2' => $like2,
+        ];
+
+        $DB->execute($sql, $params);
     }
 }
