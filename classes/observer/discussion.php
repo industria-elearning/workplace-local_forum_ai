@@ -20,6 +20,8 @@ use mod_forum\event\discussion_created;
 use mod_forum\event\discussion_deleted;
 use local_forum_ai\task\process_ai_discussion;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once(__DIR__ . '/../../locallib.php');
 
 /**
