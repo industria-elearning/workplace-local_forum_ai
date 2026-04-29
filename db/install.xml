@@ -70,10 +70,6 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
             </KEYS>
-            <INDEXES>
-                <INDEX NAME="queue_ready_ix" UNIQUE="false" FIELDS="processed, timetoprocess, tenantid" />
-                <INDEX NAME="queue_type_item_ix" UNIQUE="false" FIELDS="type, itemid" />
-            </INDEXES>
         </TABLE>
 
     </TABLES>

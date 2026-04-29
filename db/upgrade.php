@@ -184,7 +184,7 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
     }
 
-    if ($oldversion < 2025121203) {
+    if ($oldversion < 2026042900) {
         // Define table local_forum_ai_queue to be created.
         $table = new xmldb_table('local_forum_ai_queue');
 
@@ -210,11 +210,6 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-        // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121203, 'local', 'forum_ai');
-    }
-
-    if ($oldversion < 2025121204) {
         // Define field usedelay to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('usedelay', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'timemodified');
@@ -224,13 +219,7 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121204, 'local', 'forum_ai');
-    }
-
-    if ($oldversion < 2025121205) {
         // Define field delayminutes to be added to local_forum_ai_config.
-        $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('delayminutes', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'usedelay');
 
         // Conditionally launch add field delayminutes.
@@ -239,37 +228,7 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         }
 
         // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121205, 'local', 'forum_ai');
-    }
-
-    if ($oldversion < 2026042901) {
-        $table = new xmldb_table('local_forum_ai_queue');
-
-        // Add itemid when missing (backward compatibility).
-        $itemidfield = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'type');
-        if (!$dbman->field_exists($table, $itemidfield)) {
-            $dbman->add_field($table, $itemidfield);
-        }
-
-        // Add tenantid when missing (backward compatibility).
-        $tenantidfield = new xmldb_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'itemid');
-        if (!$dbman->field_exists($table, $tenantidfield)) {
-            $dbman->add_field($table, $tenantidfield);
-        }
-
-        // Add lookup/processing indexes when missing.
-        $readyindex = new xmldb_index('queue_ready_ix', XMLDB_INDEX_NOTUNIQUE, ['processed', 'timetoprocess', 'tenantid']);
-        if (!$dbman->index_exists($table, $readyindex)) {
-            $dbman->add_index($table, $readyindex);
-        }
-
-        $typeitemindex = new xmldb_index('queue_type_item_ix', XMLDB_INDEX_NOTUNIQUE, ['type', 'itemid']);
-        if (!$dbman->index_exists($table, $typeitemindex)) {
-            $dbman->add_index($table, $typeitemindex);
-        }
-
-        // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2026042901, 'local', 'forum_ai');
+        upgrade_plugin_savepoint(true, 2026042900, 'local', 'forum_ai');
     }
 
     return true;
