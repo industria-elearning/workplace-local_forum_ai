@@ -59,8 +59,17 @@ class process_ai_discussion extends adhoc_task {
             $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
             $post = $DB->get_record('forum_posts', ['id' => $discussion->firstpost], '*', MUST_EXIST);
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
-            $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
+            $tenantid = property_exists($data, 'tenantid')
+                ? ($data->tenantid === null ? null : (int)$data->tenantid)
+                : local_forum_ai_get_current_tenant_id();
+
+            $config = local_forum_ai_get_forum_config((int)$forum->id, $tenantid);
+
+            if (!$config || empty($config->enabled)) {
+                return;
+            }
+
+            $enabled = (int)$config->enabled;
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $enablediainitconversation = $config->enablediainitconversation ?? 0;

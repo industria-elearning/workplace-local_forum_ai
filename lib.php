@@ -23,6 +23,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+require_once(__DIR__ . '/locallib.php');
+
 /**
  * Extends the settings navigation (the "More" menu in forum activities).
  *
@@ -138,7 +140,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     $cm = $formwrapper->get_current();
     $forumid = $cm->instance ?? null;
     $context = context_course::instance($cm->course);
-    $tenantid = \tool_tenant\tenancy::get_tenant_id();
+    $tenantid = local_forum_ai_get_current_tenant_id();
 
     if (!has_capability('local/forum_ai:approveresponses', $context, $USER)) {
         return;
@@ -156,38 +158,9 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         'delayminutes' => 60,
     ];
 
-    // Load custom config if exists.
-    if ($forumid && $DB->record_exists('local_forum_ai_config', ['forumid' => $forumid])) {
-        $record = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
-
-        $defaults->enabled = $record->enabled;
-        $defaults->require_approval = $record->require_approval;
-        $defaults->reply_message = $record->reply_message;
-        $defaults->enablediainitconversation = $record->enablediainitconversation ?? 0;
-        $defaults->graderid = $record->graderid ?? null;
-        $defaults->allowedroles_saved = true;
-        $defaults->usedelay = $record->usedelay ?? 0;
-        $defaults->delayminutes = max(1, (int)($record->delayminutes ?? 60));
-
-        if (empty($record->allowedroles)) {
-            $defaults->allowedroles = [];
-        } else {
-            $sql = "SELECT * FROM {local_forum_ai_config}
-                    WHERE forumid = :forumid AND tenantid = :tenantid";
-            $params = [
-                'forumid'  => $forumid,
-                'tenantid' => $tenantid,
-            ];
-        }
-
-        $record = $DB->get_record_sql($sql, $params);
-
-        if (!$record && $tenantid !== null) {
-            $record = $DB->get_record('local_forum_ai_config', [
-                'forumid' => $forumid,
-                'tenantid' => null,
-            ]);
-        }
+    // Load tenant-aware config (fallback to global forum config when needed).
+    if ($forumid) {
+        $record = local_forum_ai_get_forum_config((int)$forumid, $tenantid);
 
         if ($record) {
             $defaults->enabled = (int)$record->enabled;
@@ -195,6 +168,8 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
             $defaults->reply_message = $record->reply_message;
             $defaults->enablediainitconversation = (int)($record->enablediainitconversation ?? 0);
             $defaults->graderid = $record->graderid ?? null;
+            $defaults->usedelay = (int)($record->usedelay ?? 0);
+            $defaults->delayminutes = max(1, (int)($record->delayminutes ?? 60));
             $defaults->allowedroles_saved = true;
 
             if (!empty($record->allowedroles)) {
@@ -381,7 +356,7 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
         return $data;
     }
 
-    $tenantid = \tool_tenant\tenancy::get_tenant_id();
+    $tenantid = local_forum_ai_get_current_tenant_id();
 
     // Search for existing configuration for this forum and tenant.
     if ($tenantid === null) {

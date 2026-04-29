@@ -20,6 +20,8 @@ use mod_forum\event\discussion_created;
 use mod_forum\event\discussion_deleted;
 use local_forum_ai\task\process_ai_discussion;
 
+require_once(__DIR__ . '/../../locallib.php');
+
 /**
  * Observer for discussion events.
  *
@@ -78,7 +80,8 @@ class discussion {
 
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
+            $tenantid = local_forum_ai_get_current_tenant_id();
+            $config = local_forum_ai_get_forum_config($forumid, $tenantid);
 
             if (!$config || empty($config->enabled)) {
                 return;
@@ -94,9 +97,12 @@ class discussion {
                 $taskdata = new \stdClass();
                 $taskdata->discussionid = $discussionid;
                 $taskdata->cmid = $cm->id;
+                $taskdata->tenantid = $tenantid;
 
                 $DB->insert_record('local_forum_ai_queue', (object) [
+                    'tenantid' => $tenantid,
                     'type' => 'discussion',
+                    'itemid' => $discussionid,
                     'payload' => json_encode($taskdata),
                     'timecreated' => time(),
                     'timetoprocess' => $timetoprocess,
@@ -110,6 +116,7 @@ class discussion {
             $taskdata = new \stdClass();
             $taskdata->discussionid = $discussionid;
             $taskdata->cmid = $cm->id;
+            $taskdata->tenantid = $tenantid;
 
             // Create and queue the ad-hoc task for AI processing.
             $task = new process_ai_discussion();
@@ -146,19 +153,22 @@ class discussion {
 
         $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
 
+        $DB->delete_records('local_forum_ai_queue', [
+            'type' => 'discussion',
+            'itemid' => $discussionid,
+        ]);
+
+        // Backward compatibility for queue rows created before itemid existed.
         $like1 = '%"discussionid":' . $discussionid . '%';
         $like2 = '%"discussionid":"' . $discussionid . '"%';
-
-        $sql = "DELETE FROM {local_forum_ai_queue}
-            WHERE type = :type
-              AND (payload LIKE :like1 OR payload LIKE :like2)";
-
-        $params = [
+        $legacysql = "DELETE FROM {local_forum_ai_queue}
+                        WHERE type = :type
+                          AND itemid IS NULL
+                          AND (payload LIKE :like1 OR payload LIKE :like2)";
+        $DB->execute($legacysql, [
             'type' => 'discussion',
             'like1' => $like1,
             'like2' => $like2,
-        ];
-
-        $DB->execute($sql, $params);
+        ]);
     }
 }

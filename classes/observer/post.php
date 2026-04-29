@@ -20,6 +20,8 @@ use mod_forum\event\post_created;
 use mod_forum\event\post_deleted;
 use local_forum_ai\task\process_ai_post;
 
+require_once(__DIR__ . '/../../locallib.php');
+
 /**
  * Forum post event observer for AI integration.
  *
@@ -49,7 +51,8 @@ class post {
             // Get course module.
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
+            $tenantid = local_forum_ai_get_current_tenant_id();
+            $config = local_forum_ai_get_forum_config((int)$forum->id, $tenantid);
 
             if (!$config || empty($config->enabled)) {
                 return true;
@@ -58,6 +61,7 @@ class post {
             $taskdata = (object) [
                 'postid' => $postid,
                 'cmid' => $cm->id,
+                'tenantid' => $tenantid,
             ];
 
             $requireapproval = (int)($config->require_approval ?? 1);
@@ -68,7 +72,9 @@ class post {
                 $timetoprocess = time() + ($delay * 60);
 
                 $DB->insert_record('local_forum_ai_queue', (object) [
+                    'tenantid' => $tenantid,
                     'type' => 'post',
+                    'itemid' => $postid,
                     'payload' => json_encode($taskdata),
                     'timecreated' => time(),
                     'timetoprocess' => $timetoprocess,
@@ -102,19 +108,22 @@ class post {
 
         $DB->delete_records('local_forum_ai_pending', ['parentpostid' => $postid]);
 
+        $DB->delete_records('local_forum_ai_queue', [
+            'type' => 'post',
+            'itemid' => $postid,
+        ]);
+
+        // Backward compatibility for queue rows created before itemid existed.
         $like1 = '%"postid":' . $postid . '%';
         $like2 = '%"postid":"' . $postid . '"%';
-
-        $sql = "DELETE FROM {local_forum_ai_queue}
-            WHERE type = :type
-              AND (payload LIKE :like1 OR payload LIKE :like2)";
-
-        $params = [
+        $legacysql = "DELETE FROM {local_forum_ai_queue}
+                        WHERE type = :type
+                          AND itemid IS NULL
+                          AND (payload LIKE :like1 OR payload LIKE :like2)";
+        $DB->execute($legacysql, [
             'type' => 'post',
             'like1' => $like1,
             'like2' => $like2,
-        ];
-
-        $DB->execute($sql, $params);
+        ]);
     }
 }

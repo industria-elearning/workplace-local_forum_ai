@@ -65,8 +65,17 @@ class process_ai_post extends adhoc_task {
                 return;
             }
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
-            $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
+            $tenantid = property_exists($data, 'tenantid')
+                ? ($data->tenantid === null ? null : (int)$data->tenantid)
+                : local_forum_ai_get_current_tenant_id();
+
+            $config = local_forum_ai_get_forum_config((int)$forum->id, $tenantid);
+
+            if (!$config || empty($config->enabled)) {
+                return;
+            }
+
+            $enabled = (int)$config->enabled;
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $allowedroles = $config->allowedroles ?? '';
@@ -76,10 +85,6 @@ class process_ai_post extends adhoc_task {
             if (!$requireapproval && !$effectivegraderid) {
                 debugging('Automatic approval requires a configured grader in forum ' . $forum->id, DEBUG_DEVELOPER);
                 $requireapproval = 1;
-            }
-
-            if (!$enabled) {
-                return;
             }
 
             if (!role_checker::user_has_allowed_role($forum->id, $post->userid, $allowedroles)) {

@@ -58,6 +58,16 @@ class process_ai_queue extends \core\task\scheduled_task {
         foreach ($items as $item) {
             $data = json_decode($item->payload);
 
+            if (!$data instanceof \stdClass) {
+                $item->processed = 1;
+                $DB->update_record('local_forum_ai_queue', $item);
+                continue;
+            }
+
+            if (!property_exists($data, 'tenantid')) {
+                $data->tenantid = $item->tenantid ?? null;
+            }
+
             try {
                 if ($item->type === 'post') {
                     $task = new process_ai_post();

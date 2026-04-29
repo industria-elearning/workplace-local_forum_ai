@@ -59,6 +59,8 @@
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" />
                 <FIELD NAME="type" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" />
+                <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+                <FIELD NAME="tenantid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
                 <FIELD NAME="payload" TYPE="text" NOTNULL="true" SEQUENCE="false" />
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
                 <FIELD NAME="timetoprocess" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
@@ -68,6 +70,10 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id" />
             </KEYS>
+            <INDEXES>
+                <INDEX NAME="queue_ready_ix" UNIQUE="false" FIELDS="processed, timetoprocess, tenantid" />
+                <INDEX NAME="queue_type_item_ix" UNIQUE="false" FIELDS="type, itemid" />
+            </INDEXES>
         </TABLE>
 
     </TABLES>
