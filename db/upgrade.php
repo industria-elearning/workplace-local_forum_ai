@@ -159,6 +159,32 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
     }
 
     if ($oldversion < 2025121201) {
+        // Define field tenantid to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'forumid');
+
+        // Conditionally launch add field tenantid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025121201, 'local', 'forum_ai');
+    }
+
+    if ($oldversion < 2025121202) {
+        // Define key forum_tenant_unique (unique) to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $key = new xmldb_key('forum_tenant_unique', XMLDB_KEY_UNIQUE, ['forumid', 'tenantid']);
+
+        // Launch add key forum_tenant_unique.
+        $dbman->add_key($table, $key);
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
+    }
+
+    if ($oldversion < 2025121203) {
         // Define table local_forum_ai_queue to be created.
         $table = new xmldb_table('local_forum_ai_queue');
 
@@ -179,10 +205,10 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         }
 
         // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121201, 'local', 'forum_ai');
+        upgrade_plugin_savepoint(true, 2025121203, 'local', 'forum_ai');
     }
 
-    if ($oldversion < 2025121202) {
+    if ($oldversion < 2025121204) {
         // Define field usedelay to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('usedelay', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'timemodified');
@@ -193,10 +219,10 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         }
 
         // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
+        upgrade_plugin_savepoint(true, 2025121204, 'local', 'forum_ai');
     }
 
-    if ($oldversion < 2025121203) {
+    if ($oldversion < 2025121205) {
         // Define field delayminutes to be added to local_forum_ai_config.
         $table = new xmldb_table('local_forum_ai_config');
         $field = new xmldb_field('delayminutes', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'usedelay');
@@ -207,7 +233,7 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         }
 
         // Forum_ai savepoint reached.
-        upgrade_plugin_savepoint(true, 2025121203, 'local', 'forum_ai');
+        upgrade_plugin_savepoint(true, 2025121205, 'local', 'forum_ai');
     }
 
     return true;
