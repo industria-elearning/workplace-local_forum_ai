@@ -184,5 +184,52 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2025121202, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2026042900) {
+        // Define table local_forum_ai_queue to be created.
+        $table = new xmldb_table('local_forum_ai_queue');
+
+        // Adding fields to table local_forum_ai_queue.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, null);
+        $table->add_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, null);
+        $table->add_field('payload', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timetoprocess', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('processed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table local_forum_ai_queue.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table local_forum_ai_queue.
+        $table->add_index('queue_ready_ix', XMLDB_INDEX_NOTUNIQUE, ['processed', 'timetoprocess', 'tenantid']);
+        $table->add_index('queue_type_item_ix', XMLDB_INDEX_NOTUNIQUE, ['type', 'itemid']);
+
+        // Conditionally launch create table for local_forum_ai_queue.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field usedelay to be added to local_forum_ai_config.
+        $table = new xmldb_table('local_forum_ai_config');
+        $field = new xmldb_field('usedelay', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'timemodified');
+
+        // Conditionally launch add field usedelay.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field delayminutes to be added to local_forum_ai_config.
+        $field = new xmldb_field('delayminutes', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'usedelay');
+
+        // Conditionally launch add field delayminutes.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2026042900, 'local', 'forum_ai');
+    }
+
     return true;
 }

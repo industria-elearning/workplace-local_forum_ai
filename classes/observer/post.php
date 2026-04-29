@@ -20,6 +20,10 @@ use mod_forum\event\post_created;
 use mod_forum\event\post_deleted;
 use local_forum_ai\task\process_ai_post;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../locallib.php');
+
 /**
  * Forum post event observer for AI integration.
  *
@@ -49,18 +53,42 @@ class post {
             // Get course module.
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-            // Prepare data for ad-hoc task.
-            $taskdata = new \stdClass();
-            $taskdata->postid = $postid;
-            $taskdata->cmid = $cm->id;
+            $tenantid = local_forum_ai_get_current_tenant_id();
+            $config = local_forum_ai_get_forum_config((int)$forum->id, $tenantid);
 
-            // Create and queue the ad-hoc task.
-            $task = new process_ai_post();
-            $task->set_custom_data($taskdata);
-            $task->set_component('local_forum_ai');
-            $task->set_userid($post->userid);
+            if (!$config || empty($config->enabled)) {
+                return true;
+            }
 
-            \core\task\manager::queue_adhoc_task($task);
+            $taskdata = (object) [
+                'postid' => $postid,
+                'cmid' => $cm->id,
+                'tenantid' => $tenantid,
+            ];
+
+            $requireapproval = (int)($config->require_approval ?? 1);
+
+            // Delayed review settings only apply when approvals are automatic.
+            if ($requireapproval === 0 && !empty($config->usedelay)) {
+                $delay = max(1, (int) $config->delayminutes);
+                $timetoprocess = time() + ($delay * 60);
+
+                $DB->insert_record('local_forum_ai_queue', (object) [
+                    'tenantid' => $tenantid,
+                    'type' => 'post',
+                    'itemid' => $postid,
+                    'payload' => json_encode($taskdata),
+                    'timecreated' => time(),
+                    'timetoprocess' => $timetoprocess,
+                    'processed' => 0,
+                ]);
+            } else {
+                $task = new process_ai_post();
+                $task->set_custom_data($taskdata);
+                $task->set_component('local_forum_ai');
+                $task->set_userid($post->userid);
+                \core\task\manager::queue_adhoc_task($task);
+            }
 
             return true;
         } catch (\Throwable $e) {
@@ -78,8 +106,26 @@ class post {
     public static function post_deleted(post_deleted $event): void {
         global $DB;
 
-        $postid = $event->objectid;
+        $postid = (int) $event->objectid;
 
         $DB->delete_records('local_forum_ai_pending', ['parentpostid' => $postid]);
+
+        $DB->delete_records('local_forum_ai_queue', [
+            'type' => 'post',
+            'itemid' => $postid,
+        ]);
+
+        // Backward compatibility for queue rows created before itemid existed.
+        $like1 = '%"postid":' . $postid . '%';
+        $like2 = '%"postid":"' . $postid . '"%';
+        $legacysql = "DELETE FROM {local_forum_ai_queue}
+                        WHERE type = :type
+                          AND itemid IS NULL
+                          AND (payload LIKE :like1 OR payload LIKE :like2)";
+        $DB->execute($legacysql, [
+            'type' => 'post',
+            'like1' => $like1,
+            'like2' => $like2,
+        ]);
     }
 }

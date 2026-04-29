@@ -20,6 +20,10 @@ use mod_forum\event\discussion_created;
 use mod_forum\event\discussion_deleted;
 use local_forum_ai\task\process_ai_discussion;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once(__DIR__ . '/../../locallib.php');
+
 /**
  * Observer for discussion events.
  *
@@ -78,9 +82,35 @@ class discussion {
 
             $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forumid]);
+            $tenantid = local_forum_ai_get_current_tenant_id();
+            $config = local_forum_ai_get_forum_config($forumid, $tenantid);
 
             if (!$config || empty($config->enabled)) {
+                return;
+            }
+
+            $requireapproval = (int)($config->require_approval ?? 1);
+
+            // Delayed review settings only apply when approvals are automatic.
+            if ($requireapproval === 0 && !empty($config->usedelay)) {
+                $delay = max(1, (int) $config->delayminutes);
+                $timetoprocess = time() + ($delay * 60);
+
+                $taskdata = new \stdClass();
+                $taskdata->discussionid = $discussionid;
+                $taskdata->cmid = $cm->id;
+                $taskdata->tenantid = $tenantid;
+
+                $DB->insert_record('local_forum_ai_queue', (object) [
+                    'tenantid' => $tenantid,
+                    'type' => 'discussion',
+                    'itemid' => $discussionid,
+                    'payload' => json_encode($taskdata),
+                    'timecreated' => time(),
+                    'timetoprocess' => $timetoprocess,
+                    'processed' => 0,
+                ]);
+
                 return;
             }
 
@@ -88,6 +118,7 @@ class discussion {
             $taskdata = new \stdClass();
             $taskdata->discussionid = $discussionid;
             $taskdata->cmid = $cm->id;
+            $taskdata->tenantid = $tenantid;
 
             // Create and queue the ad-hoc task for AI processing.
             $task = new process_ai_discussion();
@@ -97,13 +128,11 @@ class discussion {
 
             \core\task\manager::queue_adhoc_task($task);
         } catch (\dml_missing_record_exception $e) {
-            // Required record not found, log and skip.
             debugging(
                 'Missing record in process_discussion: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
             );
         } catch (\Throwable $e) {
-            // General error occurred.
             debugging(
                 'Error processing discussion for AI: ' . $e->getMessage(),
                 DEBUG_DEVELOPER
@@ -122,16 +151,26 @@ class discussion {
     public static function discussion_deleted(discussion_deleted $event): void {
         global $DB;
 
-        try {
-            $discussionid = $event->objectid;
+        $discussionid = (int) $event->objectid;
 
-            // Clean up pending AI processing records.
-            $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
-        } catch (\Throwable $e) {
-            debugging(
-                'Error in discussion_deleted observer: ' . $e->getMessage(),
-                DEBUG_DEVELOPER
-            );
-        }
+        $DB->delete_records('local_forum_ai_pending', ['discussionid' => $discussionid]);
+
+        $DB->delete_records('local_forum_ai_queue', [
+            'type' => 'discussion',
+            'itemid' => $discussionid,
+        ]);
+
+        // Backward compatibility for queue rows created before itemid existed.
+        $like1 = '%"discussionid":' . $discussionid . '%';
+        $like2 = '%"discussionid":"' . $discussionid . '"%';
+        $legacysql = "DELETE FROM {local_forum_ai_queue}
+                        WHERE type = :type
+                          AND itemid IS NULL
+                          AND (payload LIKE :like1 OR payload LIKE :like2)";
+        $DB->execute($legacysql, [
+            'type' => 'discussion',
+            'like1' => $like1,
+            'like2' => $like2,
+        ]);
     }
 }

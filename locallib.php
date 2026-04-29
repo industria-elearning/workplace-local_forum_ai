@@ -27,6 +27,65 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/rating/lib.php');
 
 /**
+ * Returns the current Workplace tenant id when tenancy is available.
+ *
+ * @return int|null
+ */
+function local_forum_ai_get_current_tenant_id(): ?int {
+    if (!class_exists('\\tool_tenant\\tenancy')) {
+        return null;
+    }
+
+    $tenantid = \tool_tenant\tenancy::get_tenant_id();
+    return $tenantid === null ? null : (int)$tenantid;
+}
+
+/**
+ * Returns the effective forum configuration for a tenant.
+ *
+ * Resolution order:
+ * 1) Exact match by (forumid, tenantid)
+ * 2) Fallback to global row (forumid, tenantid IS NULL)
+ *
+ * @param int $forumid Forum id.
+ * @param int|null $tenantid Tenant id.
+ * @return stdClass|null
+ */
+function local_forum_ai_get_forum_config(int $forumid, ?int $tenantid): ?stdClass {
+    global $DB;
+
+    if ($tenantid === null) {
+        $sql = "SELECT *
+                  FROM {local_forum_ai_config}
+                 WHERE forumid = :forumid
+                   AND tenantid IS NULL";
+
+        return $DB->get_record_sql($sql, ['forumid' => $forumid]) ?: null;
+    }
+
+    $sql = "SELECT *
+              FROM {local_forum_ai_config}
+             WHERE forumid = :forumid
+               AND tenantid = :tenantid";
+
+    $record = $DB->get_record_sql($sql, [
+        'forumid' => $forumid,
+        'tenantid' => $tenantid,
+    ]);
+
+    if ($record) {
+        return $record;
+    }
+
+    $fallbacksql = "SELECT *
+                      FROM {local_forum_ai_config}
+                     WHERE forumid = :forumid
+                       AND tenantid IS NULL";
+
+    return $DB->get_record_sql($fallbacksql, ['forumid' => $forumid]) ?: null;
+}
+
+/**
  * Gets the list of pending responses.
  *
  * @package local_forum_ai
@@ -105,39 +164,6 @@ function local_forum_ai_get_history(int $courseid, int $forumid = 0) {
     $sql .= " ORDER BY p.timecreated DESC";
 
     return $DB->get_records_sql($sql, $params);
-}
-
-/**
- * Returns the teachers (users with editingteacher role) of a course.
- *
- * @package local_forum_ai
- * @param int $courseid Course ID.
- * @param bool $single Whether to return only one.
- * @return \stdClass|array|null
- */
-function local_forum_ai_get_editingteachers(int $courseid, bool $single = false) {
-    global $DB;
-
-    $context = \context_course::instance($courseid);
-
-    $sql = "SELECT u.*
-              FROM {role_assignments} ra
-              JOIN {user} u ON u.id = ra.userid
-              JOIN {role} r ON r.id = ra.roleid
-             WHERE ra.contextid = :contextid
-               AND r.shortname = :rolename
-             ORDER BY ra.id ASC";
-
-    $params = [
-        'contextid' => $context->id,
-        'rolename' => 'editingteacher',
-    ];
-
-    if ($single) {
-        return $DB->get_record_sql($sql . " LIMIT 1", $params);
-    } else {
-        return $DB->get_records_sql($sql, $params);
-    }
 }
 
 /**

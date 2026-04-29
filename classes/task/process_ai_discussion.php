@@ -59,13 +59,28 @@ class process_ai_discussion extends adhoc_task {
             $course = $DB->get_record('course', ['id' => $forum->course], '*', MUST_EXIST);
             $post = $DB->get_record('forum_posts', ['id' => $discussion->firstpost], '*', MUST_EXIST);
 
-            $config = $DB->get_record('local_forum_ai_config', ['forumid' => $forum->id]);
-            $enabled = $config->enabled ?? get_config('local_forum_ai', 'default_enabled');
+            $tenantid = property_exists($data, 'tenantid')
+                ? ($data->tenantid === null ? null : (int)$data->tenantid)
+                : local_forum_ai_get_current_tenant_id();
+
+            $config = local_forum_ai_get_forum_config((int)$forum->id, $tenantid);
+
+            if (!$config || empty($config->enabled)) {
+                return;
+            }
+
+            $enabled = (int)$config->enabled;
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $enablediainitconversation = $config->enablediainitconversation ?? 0;
             $allowedroles = $config->allowedroles ?? '';
             $graderid = $config->graderid ?? null;
+            $effectivegraderid = !$requireapproval ? $graderid : null;
+
+            if (!$requireapproval && !$effectivegraderid) {
+                debugging('Automatic approval requires a configured grader in forum ' . $forum->id, DEBUG_DEVELOPER);
+                $requireapproval = 1;
+            }
 
             if (!$enabled || empty($enablediainitconversation)) {
                 return;
@@ -82,7 +97,8 @@ class process_ai_discussion extends adhoc_task {
                 'forum' => $forum->name,
                 'discussion' => $discussion->name,
                 'discussion_id' => $discussionid,
-                'userid' => $graderid ?? 2,
+                // Only consider configured auto-grader in automatic approval mode.
+                'userid' => (string)($effectivegraderid ?? 2),
                 'postid' => $post->id,
                 'prompt' => $replymessage,
                 'grading_enabled' => $gradingenabled,
@@ -93,7 +109,7 @@ class process_ai_discussion extends adhoc_task {
             $replytext = $airesponse['reply'] ?? '';
             $grade = $gradingenabled ? ($airesponse['grade'] ?? null) : null;
 
-            if (!$requireapproval && $gradingenabled && $grade !== null && $graderid) {
+            if (!$requireapproval && $gradingenabled && $grade !== null && $effectivegraderid) {
                 $context = \context_module::instance($data->cmid);
                 $cm = get_coursemodule_from_instance('forum', $forum->id, $course->id, false, MUST_EXIST);
 
@@ -109,7 +125,7 @@ class process_ai_discussion extends adhoc_task {
                         $grade,
                         $discussion->userid,
                         $forum->assessed,
-                        $graderid
+                        $effectivegraderid
                     );
 
                     if (!empty($result->error)) {
@@ -118,7 +134,7 @@ class process_ai_discussion extends adhoc_task {
                 } catch (\Exception $e) {
                     debugging('Exception adding AI rating: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 }
-            } else if (!$requireapproval && $gradingenabled && $grade !== null && !$graderid) {
+            } else if (!$requireapproval && $gradingenabled && $grade !== null && !$effectivegraderid) {
                 debugging('Grading enabled but no grader configured for forum ' . $forum->id, DEBUG_DEVELOPER);
             }
 
@@ -128,11 +144,12 @@ class process_ai_discussion extends adhoc_task {
                 $replytext,
                 $requireapproval ? 'pending' : 'approved',
                 $discussion->firstpost,
-                $grade
+                $grade,
+                (!$requireapproval && $effectivegraderid) ? $effectivegraderid : $discussion->userid
             );
 
             if (!$requireapproval) {
-                approval::create_ai_reply($discussion, $replytext, $discussion->firstpost);
+                approval::create_ai_reply($discussion, $replytext, $discussion->firstpost, $effectivegraderid);
             }
         } catch (\Throwable $e) {
             debugging('Error in process_ai_discussion task: ' . $e->getMessage(), DEBUG_DEVELOPER);
