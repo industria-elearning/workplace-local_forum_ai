@@ -44,105 +44,114 @@ if ($hassiteconfig) {
         }
     }
 
-    $settings = new admin_settingpage('local_forum_ai_settings', new lang_string('pluginname', 'local_forum_ai'));
-
-    if ($ADMIN->fulltree) {
-        $settings->add(new admin_setting_configcheckbox(
-            'local_forum_ai/enableforumai',
-            get_string('enableforumai', 'local_forum_ai'),
-            get_string('enableforumai_desc', 'local_forum_ai'),
-            1
+    if (class_exists('\\tool_tenant\\tenancy')) {
+        $ADMIN->add('localplugins', new admin_externalpage(
+            'local_forum_ai_settings',
+            get_string('pluginname', 'local_forum_ai'),
+            new moodle_url('/local/forum_ai/admin/settings_tenant.php'),
+            'moodle/site:config'
         ));
+    } else {
+        $settings = new admin_settingpage('local_forum_ai_settings', new lang_string('pluginname', 'local_forum_ai'));
 
-        $globalenableaisetting = new admin_setting_configcheckbox(
-            'local_forum_ai/default_enabled',
-            get_string('defaultenableai', 'local_forum_ai'),
-            get_string('defaultenableai_desc', 'local_forum_ai'),
-            1
-        );
-        $globalenableaisetting->set_updatedcallback(function (string $settingname): void {
-            if ($settingname !== 'local_forum_ai/default_enabled') {
-                return;
-            }
+        if ($ADMIN->fulltree) {
+            $settings->add(new admin_setting_configcheckbox(
+                'local_forum_ai/enableforumai',
+                get_string('enableforumai', 'local_forum_ai'),
+                get_string('enableforumai_desc', 'local_forum_ai'),
+                1
+            ));
 
-            if (!\local_forum_ai\utils::is_global_ai_enabled()) {
-                \local_forum_ai\utils::disable_all_forums_ai();
-            }
-        });
-        $settings->add($globalenableaisetting);
+            $globalenableaisetting = new admin_setting_configcheckbox(
+                'local_forum_ai/default_enabled',
+                get_string('defaultenableai', 'local_forum_ai'),
+                get_string('defaultenableai_desc', 'local_forum_ai'),
+                1
+            );
+            $globalenableaisetting->set_updatedcallback(function (string $settingname): void {
+                if ($settingname !== 'local_forum_ai/default_enabled') {
+                    return;
+                }
 
-        $settings->add(new admin_setting_configcheckbox(
-            'local_forum_ai/default_enablediainitconversation',
-            get_string('enablediainitconversation', 'local_forum_ai'),
-            get_string('enablediainitconversation_help', 'local_forum_ai'),
-            0
-        ));
+                if (!\local_forum_ai\utils::is_global_ai_enabled()) {
+                    \local_forum_ai\utils::disable_all_forums_ai();
+                }
+            });
+            $settings->add($globalenableaisetting);
 
-        $settings->add(new admin_setting_configcheckbox(
-            'local_forum_ai/default_require_approval',
-            get_string('require_approval', 'local_forum_ai'),
-            '',
-            1
-        ));
+            $settings->add(new admin_setting_configcheckbox(
+                'local_forum_ai/default_enablediainitconversation',
+                get_string('enablediainitconversation', 'local_forum_ai'),
+                get_string('enablediainitconversation_help', 'local_forum_ai'),
+                0
+            ));
 
-        $settings->add(new admin_setting_configcheckbox(
-            'local_forum_ai/default_usedelay',
-            get_string('usedelay', 'local_forum_ai'),
-            get_string('usedelay_help', 'local_forum_ai'),
-            0
-        ));
+            $settings->add(new admin_setting_configcheckbox(
+                'local_forum_ai/default_require_approval',
+                get_string('require_approval', 'local_forum_ai'),
+                '',
+                1
+            ));
 
-        $settings->add(new admin_setting_configtext(
-            'local_forum_ai/default_delayminutes',
-            get_string('delayminutes', 'local_forum_ai'),
-            get_string('delayminutes_help', 'local_forum_ai'),
-            60,
-            PARAM_INT
-        ));
+            $settings->add(new admin_setting_configcheckbox(
+                'local_forum_ai/default_usedelay',
+                get_string('usedelay', 'local_forum_ai'),
+                get_string('usedelay_help', 'local_forum_ai'),
+                0
+            ));
 
-        $questionturnoptions = [
-            0 => '0',
-            1 => '1',
-            2 => '2',
-            3 => '3',
-        ];
-        $settings->add(new admin_setting_configselect(
-            'local_forum_ai/default_question_turns',
-            get_string('questionturns', 'local_forum_ai'),
-            get_string('questionturns_help', 'local_forum_ai'),
-            1,
-            $questionturnoptions
-        ));
+            $settings->add(new admin_setting_configtext(
+                'local_forum_ai/default_delayminutes',
+                get_string('delayminutes', 'local_forum_ai'),
+                get_string('delayminutes_help', 'local_forum_ai'),
+                60,
+                PARAM_INT
+            ));
 
-        $settings->add(new admin_setting_configtextarea(
-            'local_forum_ai/default_reply_message',
-            get_string('reply_message', 'local_forum_ai'),
-            '',
-            get_string('default_reply_message', 'local_forum_ai'),
-            PARAM_TEXT,
-            3,
-            3
-        ));
+            $questionturnoptions = [
+                0 => '0',
+                1 => '1',
+                2 => '2',
+                3 => '3',
+            ];
+            $settings->add(new admin_setting_configselect(
+                'local_forum_ai/default_question_turns',
+                get_string('questionturns', 'local_forum_ai'),
+                get_string('questionturns_help', 'local_forum_ai'),
+                1,
+                $questionturnoptions
+            ));
 
-        $settings->hide_if('local_forum_ai/default_enabled', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_enablediainitconversation', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_require_approval', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_question_turns', 'local_forum_ai/enableforumai', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_reply_message', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->add(new admin_setting_configtextarea(
+                'local_forum_ai/default_reply_message',
+                get_string('reply_message', 'local_forum_ai'),
+                '',
+                get_string('default_reply_message', 'local_forum_ai'),
+                PARAM_TEXT,
+                3,
+                3
+            ));
 
-        $settings->hide_if('local_forum_ai/default_enablediainitconversation', 'local_forum_ai/default_enabled', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_require_approval', 'local_forum_ai/default_enabled', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/default_enabled', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_enabled', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_question_turns', 'local_forum_ai/default_enabled', 'eq', 0);
-        $settings->hide_if('local_forum_ai/default_reply_message', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_enabled', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_enablediainitconversation', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_require_approval', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_question_turns', 'local_forum_ai/enableforumai', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_reply_message', 'local_forum_ai/enableforumai', 'eq', 0);
 
-        $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/default_require_approval', 'eq', 1);
-        $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_require_approval', 'eq', 1);
-        $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_usedelay', 'neq', 1);
+            $settings->hide_if('local_forum_ai/default_enablediainitconversation', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_require_approval', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_question_turns', 'local_forum_ai/default_enabled', 'eq', 0);
+            $settings->hide_if('local_forum_ai/default_reply_message', 'local_forum_ai/default_enabled', 'eq', 0);
+
+            $settings->hide_if('local_forum_ai/default_usedelay', 'local_forum_ai/default_require_approval', 'eq', 1);
+            $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_require_approval', 'eq', 1);
+            $settings->hide_if('local_forum_ai/default_delayminutes', 'local_forum_ai/default_usedelay', 'neq', 1);
+        }
+
+        $ADMIN->add('localplugins', $settings);
     }
-
-    $ADMIN->add('localplugins', $settings);
 }

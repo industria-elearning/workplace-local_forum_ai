@@ -16,6 +16,7 @@
 
 namespace local_forum_ai;
 
+use local_forum_ai\config\tenant_config;
 use local_forum_ai\helper\rubric;
 use local_forum_ai\helper\guide;
 
@@ -66,28 +67,101 @@ class utils {
     /**
      * Checks whether forum AI feature is globally enabled.
      *
+     * @param int|null $tenantid Tenant id override.
      * @return bool
      */
-    public static function is_feature_enabled(): bool {
-        $enabled = get_config('local_forum_ai', 'enableforumai');
-        if ($enabled === false || $enabled === '') {
-            return true;
+    public static function is_feature_enabled(?int $tenantid = null): bool {
+        $enabled = self::get_plugin_setting('enableforumai', 1, $tenantid);
+        return !empty($enabled);
+    }
+
+    /**
+     * Returns the current tenant id for Workplace contexts.
+     *
+     * @return int
+     */
+    public static function get_current_tenant_id(): int {
+        if (class_exists('\\tool_tenant\\tenancy')) {
+            $tenantid = \tool_tenant\tenancy::get_tenant_id();
+            if ($tenantid !== null) {
+                return (int)$tenantid;
+            }
         }
 
-        return !empty($enabled);
+        return 0;
+    }
+
+    /**
+     * Returns one plugin setting, resolved per-tenant in Workplace.
+     *
+     * @param string $name Setting name.
+     * @param mixed $default Default value.
+     * @param int|null $tenantid Tenant id override.
+     * @return mixed
+     */
+    public static function get_plugin_setting(string $name, $default = null, ?int $tenantid = null) {
+        if ($tenantid === null) {
+            $tenantid = self::get_current_tenant_id();
+        }
+
+        if (class_exists('\\tool_tenant\\tenancy')) {
+            return tenant_config::get('local_forum_ai', $tenantid, $name, $default);
+        }
+
+        $value = get_config('local_forum_ai', $name);
+        if ($value !== false && $value !== null && $value !== '') {
+            return $value;
+        }
+
+        return $default;
+    }
+
+    /**
+     * Returns tenant-aware default configuration values.
+     *
+     * @param int|null $tenantid Tenant id override.
+     * @return \stdClass
+     */
+    public static function get_default_values(?int $tenantid = null): \stdClass {
+        $rawdefaultenabled = self::get_plugin_setting('default_enabled', 1, $tenantid);
+        $rawdefaultrequireapproval = self::get_plugin_setting('default_require_approval', 1, $tenantid);
+        $rawdefaultreplymessage = self::get_plugin_setting('default_reply_message', get_string('default_reply_message', 'local_forum_ai'), $tenantid);
+        $rawdefaultinitconversation = self::get_plugin_setting('default_enablediainitconversation', 0, $tenantid);
+        $rawdefaultusedelay = self::get_plugin_setting('default_usedelay', 0, $tenantid);
+        $rawdefaultdelayminutes = self::get_plugin_setting('default_delayminutes', 60, $tenantid);
+        $rawdefaultquestionturns = self::get_plugin_setting('default_question_turns', 1, $tenantid);
+
+        $defaultenabled = ($rawdefaultenabled === false || $rawdefaultenabled === '') ? 1 : (int)$rawdefaultenabled;
+        $defaultrequireapproval = ($rawdefaultrequireapproval === false || $rawdefaultrequireapproval === '') ? 1 : (int)$rawdefaultrequireapproval;
+        $defaultreplymessage = ($rawdefaultreplymessage === false || trim((string)$rawdefaultreplymessage) === '')
+            ? get_string('default_reply_message', 'local_forum_ai')
+            : (string)$rawdefaultreplymessage;
+        $defaultinitconversation = ($rawdefaultinitconversation === false || $rawdefaultinitconversation === '') ? 0 : (int)$rawdefaultinitconversation;
+        $defaultusedelay = ($rawdefaultusedelay === false || $rawdefaultusedelay === '') ? 0 : (int)$rawdefaultusedelay;
+        $defaultdelayminutes = ($rawdefaultdelayminutes === false || $rawdefaultdelayminutes === '')
+            ? 60
+            : max(1, (int)$rawdefaultdelayminutes);
+        $defaultquestionturns = self::normalize_question_turns($rawdefaultquestionturns);
+
+        return (object) [
+            'enabled' => $defaultenabled,
+            'require_approval' => $defaultrequireapproval,
+            'reply_message' => $defaultreplymessage,
+            'enablediainitconversation' => $defaultinitconversation,
+            'usedelay' => $defaultusedelay,
+            'delayminutes' => $defaultdelayminutes,
+            'questionturns' => $defaultquestionturns,
+        ];
     }
 
     /**
      * Checks whether forum AI can be enabled globally per forum.
      *
+     * @param int|null $tenantid Tenant id override.
      * @return bool
      */
-    public static function is_global_ai_enabled(): bool {
-        $enabled = get_config('local_forum_ai', 'default_enabled');
-        if ($enabled === false || $enabled === '') {
-            return true;
-        }
-
+    public static function is_global_ai_enabled(?int $tenantid = null): bool {
+        $enabled = self::get_plugin_setting('default_enabled', 1, $tenantid);
         return !empty($enabled);
     }
 
@@ -132,10 +206,11 @@ class utils {
     /**
      * Gets global default for "question turns with follow-up".
      *
+     * @param int|null $tenantid Tenant id override.
      * @return int
      */
-    public static function get_default_question_turns(): int {
-        $raw = get_config('local_forum_ai', 'default_question_turns');
+    public static function get_default_question_turns(?int $tenantid = null): int {
+        $raw = self::get_plugin_setting('default_question_turns', 1, $tenantid);
         if ($raw === false || $raw === '') {
             return 1;
         }

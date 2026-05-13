@@ -160,41 +160,21 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         return;
     }
 
-    $rawdefaultenabled = get_config('local_forum_ai', 'default_enabled');
-    $rawdefaultrequireapproval = get_config('local_forum_ai', 'default_require_approval');
-    $rawdefaultreplymessage = get_config('local_forum_ai', 'default_reply_message');
-    $rawdefaultinitconversation = get_config('local_forum_ai', 'default_enablediainitconversation');
-    $rawdefaultusedelay = get_config('local_forum_ai', 'default_usedelay');
-    $rawdefaultdelayminutes = get_config('local_forum_ai', 'default_delayminutes');
-
-    $defaultenabled = ($rawdefaultenabled === false || $rawdefaultenabled === '') ? 1 : (int)$rawdefaultenabled;
-    $defaultrequireapproval =
-        ($rawdefaultrequireapproval === false || $rawdefaultrequireapproval === '') ? 1 : (int)$rawdefaultrequireapproval;
-    $defaultreplymessage =
-        ($rawdefaultreplymessage === false || trim((string)$rawdefaultreplymessage) === '')
-            ? get_string('default_reply_message', 'local_forum_ai')
-            : (string)$rawdefaultreplymessage;
-    $defaultinitconversation =
-        ($rawdefaultinitconversation === false || $rawdefaultinitconversation === '') ? 0 : (int)$rawdefaultinitconversation;
-    $defaultusedelay = ($rawdefaultusedelay === false || $rawdefaultusedelay === '') ? 0 : (int)$rawdefaultusedelay;
-    $defaultdelayminutes = ($rawdefaultdelayminutes === false || $rawdefaultdelayminutes === '')
-        ? 60
-        : max(1, (int)$rawdefaultdelayminutes);
-    $defaultquestionturns = \local_forum_ai\utils::get_default_question_turns();
-    $globalenabled = \local_forum_ai\utils::is_global_ai_enabled();
+    $defaultsdata = \local_forum_ai\utils::get_default_values($tenantid);
+    $globalenabled = \local_forum_ai\utils::is_global_ai_enabled($tenantid);
 
     // Default values.
     $defaults = (object)[
-        'enabled' => $defaultenabled,
-        'require_approval' => $defaultrequireapproval,
-        'reply_message' => $defaultreplymessage,
-        'enablediainitconversation' => $defaultinitconversation,
+        'enabled' => (int)$defaultsdata->enabled,
+        'require_approval' => (int)$defaultsdata->require_approval,
+        'reply_message' => (string)$defaultsdata->reply_message,
+        'enablediainitconversation' => (int)$defaultsdata->enablediainitconversation,
         'allowedroles' => [],
         'allowedroles_saved' => false,
         'graderid' => null,
-        'usedelay' => $defaultusedelay,
-        'delayminutes' => $defaultdelayminutes,
-        'questionturns' => $defaultquestionturns,
+        'usedelay' => (int)$defaultsdata->usedelay,
+        'delayminutes' => max(1, (int)$defaultsdata->delayminutes),
+        'questionturns' => (int)$defaultsdata->questionturns,
     ];
 
     // Load tenant-aware config (fallback to global forum config when needed).
@@ -211,7 +191,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
             $defaults->delayminutes = max(1, (int)($record->delayminutes ?? 60));
             $defaults->allowedroles_saved = true;
             $defaults->questionturns = \local_forum_ai\utils::normalize_question_turns(
-                $record->questionturns ?? $defaultquestionturns
+                $record->questionturns ?? $defaultsdata->questionturns
             );
 
             if (!empty($record->allowedroles)) {
@@ -416,11 +396,11 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
         return $data;
     }
 
-    if (!\local_forum_ai\utils::is_feature_enabled()) {
+    $tenantid = local_forum_ai_get_current_tenant_id();
+
+    if (!\local_forum_ai\utils::is_feature_enabled($tenantid)) {
         return $data;
     }
-
-    $tenantid = local_forum_ai_get_current_tenant_id();
 
     // Search for existing configuration for this forum and tenant.
     if ($tenantid === null) {
@@ -464,16 +444,20 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     $config->usedelay = $data->local_forum_ai_usedelay ?? 0;
     $config->delayminutes = max(1, (int)($data->local_forum_ai_delayminutes ?? 60));
     $config->questionturns = \local_forum_ai\utils::normalize_question_turns(
-        $data->local_forum_ai_questionturns ?? \local_forum_ai\utils::get_default_question_turns()
+        $data->local_forum_ai_questionturns ?? \local_forum_ai\utils::get_default_question_turns($tenantid)
     );
 
-    if (!\local_forum_ai\utils::is_global_ai_enabled()) {
+    if (!\local_forum_ai\utils::is_global_ai_enabled($tenantid)) {
         $config->enabled = 0;
     }
 
-    // Process allowed roles.
-    if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
-        $config->allowedroles = implode(',', $data->allowedroles);
+    // Process allowed roles (can be array or string from form).
+    $allowedroles = $data->allowedroles ?? [];
+    if (is_string($allowedroles)) {
+        $allowedroles = $allowedroles === '' ? [] : [$allowedroles];
+    }
+    if (!empty($allowedroles) && is_array($allowedroles)) {
+        $config->allowedroles = implode(',', $allowedroles);
     } else {
         $config->allowedroles = null;
     }

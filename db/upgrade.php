@@ -273,5 +273,29 @@ function xmldb_local_forum_ai_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026050702, 'local', 'forum_ai');
     }
 
+    if ($oldversion < 2026051302) {
+        // Define table local_forum_ai_tenant_cfg to be created.
+        $table = new xmldb_table('local_forum_ai_tenant_cfg');
+
+        // Adding fields to table local_forum_ai_tenant_cfg.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('plugin', XMLDB_TYPE_CHAR, '50', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('tenantid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('value', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table local_forum_ai_tenant_cfg.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('plugin_tenant_name_uniq', XMLDB_KEY_UNIQUE, ['plugin', 'tenantid', 'name']);
+
+        // Conditionally launch create table for local_forum_ai_tenant_cfg.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Forum_ai savepoint reached.
+        upgrade_plugin_savepoint(true, 2026051302, 'local', 'forum_ai');
+    }
+
     return true;
 }
