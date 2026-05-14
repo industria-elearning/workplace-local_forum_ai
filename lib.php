@@ -39,6 +39,10 @@ require_once(__DIR__ . '/locallib.php');
 function local_forum_ai_extend_settings_navigation(settings_navigation $nav, context $context) {
     global $PAGE, $USER;
 
+    if (!\local_forum_ai\utils::is_feature_enabled()) {
+        return;
+    }
+
     // Only apply in forum module contexts.
     if ($context->contextlevel != CONTEXT_MODULE || $PAGE->cm->modname !== 'forum') {
         return;
@@ -96,6 +100,10 @@ function local_forum_ai_extend_settings_navigation(settings_navigation $nav, con
 function local_forum_ai_extend_navigation_course($navigation, $course, $context) {
     global $USER;
 
+    if (!\local_forum_ai\utils::is_feature_enabled()) {
+        return;
+    }
+
     // Only display if the user has the approveresponses capability.
     if (!has_capability('local/forum_ai:approveresponses', $context, $USER)) {
         return;
@@ -134,6 +142,10 @@ function local_forum_ai_extend_navigation_course($navigation, $course, $context)
 function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     global $DB, $USER;
 
+    if (!\local_forum_ai\utils::is_feature_enabled()) {
+        return;
+    }
+
     // Only for forum.
     if ($formwrapper->get_current()->modulename !== 'forum') {
         return;
@@ -148,16 +160,21 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         return;
     }
 
+    $defaultsdata = \local_forum_ai\utils::get_default_values($tenantid);
+    $globalenabled = \local_forum_ai\utils::is_global_ai_enabled($tenantid);
+
+    // Default values.
     $defaults = (object)[
-        'enabled' => 1,
-        'require_approval' => 1,
-        'reply_message' => get_string('default_reply_message', 'local_forum_ai'),
-        'enablediainitconversation' => 0,
+        'enabled' => (int)$defaultsdata->enabled,
+        'require_approval' => (int)$defaultsdata->require_approval,
+        'reply_message' => (string)$defaultsdata->reply_message,
+        'enablediainitconversation' => (int)$defaultsdata->enablediainitconversation,
         'allowedroles' => [],
         'allowedroles_saved' => false,
         'graderid' => null,
-        'usedelay' => 0,
-        'delayminutes' => 60,
+        'usedelay' => (int)$defaultsdata->usedelay,
+        'delayminutes' => max(1, (int)$defaultsdata->delayminutes),
+        'questionturns' => (int)$defaultsdata->questionturns,
     ];
 
     // Load tenant-aware config (fallback to global forum config when needed).
@@ -173,6 +190,9 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
             $defaults->usedelay = (int)($record->usedelay ?? 0);
             $defaults->delayminutes = max(1, (int)($record->delayminutes ?? 60));
             $defaults->allowedroles_saved = true;
+            $defaults->questionturns = \local_forum_ai\utils::normalize_question_turns(
+                $record->questionturns ?? $defaultsdata->questionturns
+            );
 
             if (!empty($record->allowedroles)) {
                 $defaults->allowedroles = explode(',', $record->allowedroles);
@@ -180,11 +200,12 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         }
     }
 
-    $mform->addElement(
-        'header',
-        'local_forum_ai_header',
-        get_string('datacurso_custom', 'local_forum_ai')
-    );
+    if (!$globalenabled) {
+        $defaults->enabled = 0;
+    }
+
+    // Header.
+    $mform->addElement('header', 'local_forum_ai_header', get_string('datacurso_custom', 'local_forum_ai'));
 
     // Enabled AI.
     $mform->addElement(
@@ -212,6 +233,22 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
         'local_forum_ai'
     );
     $mform->setDefault('enablediainitconversation', $defaults->enablediainitconversation);
+
+    $questionturnoptions = [
+        0 => '0',
+        1 => '1',
+        2 => '2',
+        3 => '3',
+    ];
+    $mform->addElement(
+        'select',
+        'local_forum_ai_questionturns',
+        get_string('questionturns', 'local_forum_ai'),
+        $questionturnoptions
+    );
+    $mform->setType('local_forum_ai_questionturns', PARAM_INT);
+    $mform->addHelpButton('local_forum_ai_questionturns', 'questionturns', 'local_forum_ai');
+    $mform->setDefault('local_forum_ai_questionturns', $defaults->questionturns);
 
     // Roles allowed to trigger AI.
     $roles = $DB->get_records('role', null, 'sortorder ASC');
@@ -277,6 +314,7 @@ function local_forum_ai_coursemodule_standard_elements($formwrapper, $mform) {
     $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_usedelay', 'neq', 1);
     $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_enabled', 'neq', 1);
     $mform->hideIf('local_forum_ai_delayminutes', 'local_forum_ai_require_approval', 'eq', 1);
+    $mform->hideIf('local_forum_ai_questionturns', 'local_forum_ai_enabled', 'neq', 1);
 
     // Users enrolled who can either rate or grade.
     $eligibleusers = [];
@@ -360,6 +398,10 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
 
     $tenantid = local_forum_ai_get_current_tenant_id();
 
+    if (!\local_forum_ai\utils::is_feature_enabled($tenantid)) {
+        return $data;
+    }
+
     // Search for existing configuration for this forum and tenant.
     if ($tenantid === null) {
         $sql = "SELECT * FROM {local_forum_ai_config}
@@ -401,10 +443,21 @@ function local_forum_ai_coursemodule_edit_post_actions($data, $course) {
     $config->graderid = $data->local_forum_ai_grader ?? null;
     $config->usedelay = $data->local_forum_ai_usedelay ?? 0;
     $config->delayminutes = max(1, (int)($data->local_forum_ai_delayminutes ?? 60));
+    $config->questionturns = \local_forum_ai\utils::normalize_question_turns(
+        $data->local_forum_ai_questionturns ?? \local_forum_ai\utils::get_default_question_turns($tenantid)
+    );
 
-    // Process allowed roles.
-    if (!empty($data->allowedroles) && is_array($data->allowedroles)) {
-        $config->allowedroles = implode(',', $data->allowedroles);
+    if (!\local_forum_ai\utils::is_global_ai_enabled($tenantid)) {
+        $config->enabled = 0;
+    }
+
+    // Process allowed roles (can be array or string from form).
+    $allowedroles = $data->allowedroles ?? [];
+    if (is_string($allowedroles)) {
+        $allowedroles = $allowedroles === '' ? [] : [$allowedroles];
+    }
+    if (!empty($allowedroles) && is_array($allowedroles)) {
+        $config->allowedroles = implode(',', $allowedroles);
     } else {
         $config->allowedroles = null;
     }

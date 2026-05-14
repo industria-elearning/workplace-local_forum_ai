@@ -20,6 +20,7 @@ use core\task\adhoc_task;
 use local_forum_ai\ai_service;
 use local_forum_ai\approval;
 use local_forum_ai\role_checker;
+use local_forum_ai\utils;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -49,6 +50,14 @@ class process_ai_discussion extends adhoc_task {
     public function execute() {
         global $DB, $CFG;
 
+        if (!utils::is_feature_enabled()) {
+            return;
+        }
+
+        if (!utils::is_global_ai_enabled()) {
+            return;
+        }
+
         // Get custom data passed to the task.
         $data = $this->get_custom_data();
         $discussionid = $data->discussionid;
@@ -69,13 +78,18 @@ class process_ai_discussion extends adhoc_task {
                 return;
             }
 
-            $enabled = (int)$config->enabled;
             $replymessage = $config->reply_message ?? get_config('local_forum_ai', 'default_reply_message');
             $requireapproval = $config->require_approval ?? 1;
             $enablediainitconversation = $config->enablediainitconversation ?? 0;
             $allowedroles = $config->allowedroles ?? '';
             $graderid = $config->graderid ?? null;
             $effectivegraderid = !$requireapproval ? $graderid : null;
+            $questionturnslimit = utils::get_effective_question_turns($config);
+            $allowfollowupquestion = utils::should_allow_followup_question(
+                (int)$discussionid,
+                (int)$post->id,
+                $questionturnslimit
+            );
 
             if (!$requireapproval && !$effectivegraderid) {
                 debugging('Automatic approval requires a configured grader in forum ' . $forum->id, DEBUG_DEVELOPER);
@@ -101,6 +115,7 @@ class process_ai_discussion extends adhoc_task {
                 'userid' => (string)($effectivegraderid ?? 2),
                 'postid' => $post->id,
                 'prompt' => $replymessage,
+                'allow_followup_question' => $allowfollowupquestion,
                 'grading_enabled' => $gradingenabled,
                 'scale' => $gradingenabled ? $forum->scale : null,
             ];
